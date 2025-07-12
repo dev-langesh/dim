@@ -74,86 +74,71 @@ async function deployApplication(data) {
       .on("ready", async () => {
         console.log("Client :: ready");
 
-        // stream.on("close", () => {
-        //   console.log(command + " :: completed");
-        //   ssh.end();
-        //   resolve("Deployment completed successfully");
-        // });
-
         // default port for app
         data.port = 8888;
 
-        try {
-          // Create working directory if it doesn't exist
-          const workingDir = "/dim";
-          await runCommand(`mkdir -p ${workingDir}`, true);
+        // Create working directory if it doesn't exist
+        const workingDir = "/dim";
+        await runCommand(`mkdir -p ${workingDir}`, true);
 
-          // Install system requirements
-          // await runCommand(systemRequirements.common[data.os].join(" && "));
+        // Install system requirements
+        await runCommand(systemRequirements.common[data.os].join(" && "));
 
-          if (data.repo) {
-            // Check if directory exists
-            const dirCheckOutput = await runCommand(
-              `[ -d "${data.appName}" ] && echo "exists" || echo ""`
-            );
-
-            console.log("Directory check output:", dirCheckOutput);
-
-            if (dirCheckOutput.trim().includes("exists")) {
-              const random = Math.floor(Math.random() * 100);
-              data.appName = `${data.appName}-${random}`;
-            }
-
-            // Clone the repo to the (possibly modified) directory name
-            await runCommand(`git clone ${data.repo} ${data.appName}`);
-          }
-
-          if (data.platform === "nodejs") {
-            // await runCommand(systemRequirements.nodejs[data.os].join(" && "));
-
-            // Install project dependencies
-            await runCommand(`cd ${data.appName} && npm install`);
-
-            // Attach ENV
-            await runCommand(`echo ${data.env} > ${data.appName}/.env`);
-
-            // Start the Node.js application
-            await runCommand(
-              `cd ${data.appName} && pm2 start npm --name ${data.appName} -- start `
-            );
-
-            await runCommand(`pm2 save`);
-
-            await runCommand("pm2 logs");
-          }
-
-          if (data.nginx) {
-            let nginxConfigData = await fs.readFile(
-              path.join(__dirname, "constants", "nginx.conf"),
-              "utf8"
-            );
-            nginxConfigData = nginxConfigData.replace(/<PORT>/g, data.port);
-
-            nginxConfigData = nginxConfigData.replace(/<DOMAIN>/g, data.domain);
-
-            const nginxConfigPath = `/etc/nginx/sites-available/${data.domain}`;
-            await runCommand(
-              `echo "${nginxConfigData}" | sudo tee ${nginxConfigPath} > /dev/null\n`
-            );
-            await runCommand(
-              `sudo ln -s ${nginxConfigPath} /etc/nginx/sites-enabled/\n`
-            );
-          }
-
-          console.log(
-            "Deployment completed successfully",
-            "Path:",
-            data.appName
+        if (data.repo) {
+          // Check if directory exists
+          const dirCheckOutput = await runCommand(
+            `[ -d "${data.appName}" ] && echo "exists" || echo ""`
           );
-        } catch (error) {
-          console.error("Error during deployment:", error);
-          reject(error);
+
+          console.log("Directory check output:", dirCheckOutput);
+
+          if (dirCheckOutput.trim().includes("exists")) {
+            const random = Math.floor(Math.random() * 100);
+            data.appName = `${data.appName}-${random}`;
+          }
+
+          // Clone the repo to the (possibly modified) directory name
+          await runCommand(`git clone ${data.repo} ${data.appName}`);
         }
+
+        if (data.platform === "nodejs") {
+          await runCommand(systemRequirements.nodejs[data.os].join(" && "));
+
+          // Install project dependencies
+          await runCommand(`cd ${data.appName} && npm install`);
+
+          // Attach ENV
+          await runCommand(`echo ${data.env} > ${data.appName}/.env`);
+
+          // Start the Node.js application
+          await runCommand(
+            `cd ${data.appName} && pm2 start npm --name ${data.appName} -- start `
+          );
+
+          await runCommand(`pm2 save`);
+
+          await runCommand("pm2 logs");
+        }
+
+        if (data.nginx) {
+          let nginxConfigData = await fs.readFile(
+            path.join(__dirname, "constants", "nginx.conf"),
+            "utf8"
+          );
+          nginxConfigData = nginxConfigData.replace(/<PORT>/g, data.port);
+
+          nginxConfigData = nginxConfigData.replace(/<DOMAIN>/g, data.domain);
+
+          const nginxConfigPath = `/etc/nginx/sites-available/${data.domain}`;
+          await runCommand(
+            `echo "${nginxConfigData}" | sudo tee ${nginxConfigPath} > /dev/null\n`
+          );
+          await runCommand(
+            `sudo ln -s ${nginxConfigPath} /etc/nginx/sites-enabled/\n`
+          );
+        }
+
+        console.log("Deployment completed successfully", "Path:", data.appName);
       })
       .connect(data)
       .on("error", (err) => reject(err));
@@ -168,3 +153,4 @@ const deployService = {
 module.exports = {
   deployService,
 };
+

@@ -1,5 +1,4 @@
 const { sshService } = require("../../lib/ssh/ssh.service");
-const { Client } = require("ssh2");
 const fs = require("fs").promises;
 const path = require("path");
 const {
@@ -7,7 +6,11 @@ const {
   supportedOperatingSystems,
   supportedDistributions,
 } = require("./constants/constants");
-const { systemRequirements } = require("./constants/commands");
+const { shellService } = require("../../lib/shell/shell.service");
+const { v4: uuid } = require("uuid");
+const { fsService } = require("../../lib/fs/fs.service");
+const { config } = require("../../config/constants");
+const { ansibleService } = require("../../lib/ansible/ansible.service");
 
 async function checkOS(data) {
   const result = await sshService.runRemoteCommand(
@@ -39,110 +42,38 @@ async function checkOS(data) {
 }
 
 async function deployApplication(data) {
-  const conn = new Client();
+  const localAppPath = path.join(
+    config.deployGroundPath,
+    data.appName + "-" + uuid()
+  );
+  const ansiblePath = config.ansiblePath;
+  const inventoryPath = path.join(localAppPath, "inventory.ini");
+  const playbookPath = path.join(localAppPath, "main.yml");
+  const uploadsPath = path.join(localAppPath, "uploads");
 
-  function runCommand(command, init = false) {
-    const cmd = init ? command : `cd /dim && ${command}`;
+  // Create necessary directories
+  await fsService.createDirectoryIfNotExists(localAppPath);
 
-    let output = "";
-    console.log(`Running command: ${command}`);
-    return new Promise((resolve, reject) => {
-      conn.exec(`${cmd}`, (error, stream) => {
-        if (error) {
-          console.log("error: ", error);
+  // Copy ansible files to the local app path
+  await fsService.copy(ansiblePath + "/*", localAppPath);
 
-          reject({ error });
-        } else {
-          stream.on("close", () => {
-            console.log(`${command} :: completed`);
-            resolve(output);
-          });
-          stream.on("data", (data) => {
-            console.log("STDOUT: " + data);
-            output += data.toString();
-          });
-          stream.stderr.on("data", (data) => {
-            console.error("STDERR: " + data);
-          });
-        }
-      });
-    });
-  }
+  // Create uploads directory
+  await fsService.createDirectoryIfNotExists(uploadsPath);
 
-  return new Promise((resolve, reject) => {
-    conn
-      .on("ready", async () => {
-        console.log("Client :: ready");
+  // Generate inventory and playbook content
+  await ansibleService.generateInventoryContent(data, inventoryPath);
 
-        // default port for app
-        data.port = 8888;
+  // Generate playbook content
+  await ansibleService.generatePlaybookContent(data, playbookPath);
 
-        // Create working directory if it doesn't exist
-        const workingDir = "/dim";
-        await runCommand(`mkdir -p ${workingDir}`, true);
+  // Create .env file in uploads directory
+  await fs.writeFile(path.join(uploadsPath, ".env"), data.env);
 
-        // Install system requirements
-        await runCommand(systemRequirements.common[data.os].join(" && "));
+  const res = await shellService.runShellCommand(
+    `ansible-playbook -i ${inventoryPath} ${playbookPath}`
+  );
 
-        if (data.repo) {
-          // Check if directory exists
-          const dirCheckOutput = await runCommand(
-            `[ -d "${data.appName}" ] && echo "exists" || echo ""`
-          );
-
-          console.log("Directory check output:", dirCheckOutput);
-
-          if (dirCheckOutput.trim().includes("exists")) {
-            const random = Math.floor(Math.random() * 100);
-            data.appName = `${data.appName}-${random}`;
-          }
-
-          // Clone the repo to the (possibly modified) directory name
-          await runCommand(`git clone ${data.repo} ${data.appName}`);
-        }
-
-        if (data.platform === "nodejs") {
-          await runCommand(systemRequirements.nodejs[data.os].join(" && "));
-
-          // Install project dependencies
-          await runCommand(`cd ${data.appName} && npm install`);
-
-          // Attach ENV
-          await runCommand(`echo ${data.env} > ${data.appName}/.env`);
-
-          // Start the Node.js application
-          await runCommand(
-            `cd ${data.appName} && pm2 start npm --name ${data.appName} -- start `
-          );
-
-          await runCommand(`pm2 save`);
-
-          await runCommand("pm2 logs");
-        }
-
-        if (data.nginx) {
-          let nginxConfigData = await fs.readFile(
-            path.join(__dirname, "constants", "nginx.conf"),
-            "utf8"
-          );
-          nginxConfigData = nginxConfigData.replace(/<PORT>/g, data.port);
-
-          nginxConfigData = nginxConfigData.replace(/<DOMAIN>/g, data.domain);
-
-          const nginxConfigPath = `/etc/nginx/sites-available/${data.domain}`;
-          await runCommand(
-            `echo "${nginxConfigData}" | sudo tee ${nginxConfigPath} > /dev/null\n`
-          );
-          await runCommand(
-            `sudo ln -s ${nginxConfigPath} /etc/nginx/sites-enabled/\n`
-          );
-        }
-
-        console.log("Deployment completed successfully", "Path:", data.appName);
-      })
-      .connect(data)
-      .on("error", (err) => reject(err));
-  });
+  return res;
 }
 
 const deployService = {
@@ -153,4 +84,3 @@ const deployService = {
 module.exports = {
   deployService,
 };
-

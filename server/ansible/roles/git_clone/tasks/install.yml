@@ -1,0 +1,19 @@
+- name: Install Git ( Debian )
+  apt:
+    name: git
+    state: present
+    update_cache: yes
+  when: ansible_facts['os_family'] == 'Debian'
+
+- name: Install Git ( RedHat )
+  yum:
+    name: git
+    state: present
+  when: ansible_facts['os_family'] == 'RedHat'
+
+- name: Install Git ( Archlinux )
+  pacman:
+    name: git
+    state: present
+    update_cache: yes
+  when: ansible_facts['os_family'] == 'Archlinux'

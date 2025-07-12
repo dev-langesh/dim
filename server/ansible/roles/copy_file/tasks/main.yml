@@ -1,0 +1,21 @@
+- name: Create application directory
+  file:
+    path: "{{ app_dir }}"
+    state: directory
+
+- name: Copy zip file
+  copy:
+    src: "{{ source_code }}"
+    dest: "{{ app_dir }}/{{ app_name }}.zip"
+
+- name: Unzip file to target
+  unarchive:
+    src: "{{ app_dir }}/{{ app_name }}.zip"
+    dest: "{{ app_dir }}"
+    remote_src: yes
+    extra_opts: [ "-j" ] 
+
+- name: Delete zip file
+  file:
+    path: "{{ app_dir }}/{{ app_name }}.zip"
+    state: absent

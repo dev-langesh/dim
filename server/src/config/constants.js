@@ -20,6 +20,8 @@ const config = {
   roles,
   otp,
   hashing,
+  deployGroundPath: process.cwd() + "/deployGround",
+  ansiblePath: process.cwd() + "/ansible",
 };
 
 module.exports = {

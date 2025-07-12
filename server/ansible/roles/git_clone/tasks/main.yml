@@ -1,0 +1,8 @@
+- name: Install Git
+  include_tasks: install.yml
+
+- name: Clone Git repository
+  git:
+    repo: "{{ git_repo }}"
+    dest: "{{ app_dir }}"
+    version: "{{ git_branch | default('main') }}"

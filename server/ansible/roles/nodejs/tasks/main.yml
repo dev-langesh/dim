@@ -1,0 +1,17 @@
+- name: Install Nodejs and PM2
+  include_tasks: install.yml
+
+- name: Copy .env file
+  copy:
+    src: "{{ env_file }}"
+    dest: "{{ app_dir }}/.env"
+  when: env_file is defined
+
+- name: Start Node app with PM2
+  shell: |
+    pm2 start npm --name {{ app_name }} -- run {{ app_start_script | default('start') }}
+    pm2 save --force
+  args:
+    chdir: "{{ app_dir }}"
+  environment:
+    NODE_ENV: "{{ node_env | default('production') }}"

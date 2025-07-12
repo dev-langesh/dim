@@ -9,8 +9,10 @@ const { apiRouter } = require("./routes");
 const { connectDb } = require("./lib/db/connectDb");
 const cookieParser = require("cookie-parser");
 const { errorHandler } = require("./middleware/errorHandler.middleware");
+const { init } = require("./config/init");
 
 connectDb();
+init();
 
 const app = express();
 const server = createServer(app);

@@ -1,0 +1,8 @@
+- name: Install Certbot
+  include_tasks: install.yml
+
+- name: Obtain SSL certificate with Certbot
+  shell: |
+    certbot --nginx -d {{ domain_name }} --non-interactive --agree-tos -m {{ cert_email }} --redirect
+  args:
+    creates: /etc/letsencrypt/live/{{ domain_name }}/fullchain.pem

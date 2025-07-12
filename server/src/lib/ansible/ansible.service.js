@@ -1,5 +1,4 @@
 const fs = require("fs").promises;
-const path = require("path");
 
 async function generateInventoryContent(data, path) {
   const inventoryData = `
@@ -20,7 +19,7 @@ ${data.appName} ansible_host=${data.ssh.host} ansible_port=${
   return inventoryData;
 }
 
-async function generatePlaybookContent(data) {
+async function generatePlaybookContent(data, path) {
   const playbookData = `
 - name: Deploy ${data.appName}
   hosts: ${data.appName}
@@ -34,7 +33,7 @@ async function generatePlaybookContent(data) {
     cert_email: ${data.certEmail || "your_email@example.com"}
     ssl_enabled: ${data.ssl}
     app_port: ${data.appPort}
-    env_file: ${uploadsPath}/.env
+    env_file: ${data.uploadsPath}/.env
 
   roles:
     ${data.repo ? "- git_clone" : "copy_file"}

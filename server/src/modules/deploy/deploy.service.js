@@ -64,7 +64,10 @@ async function deployApplication(data) {
   await ansibleService.generateInventoryContent(data, inventoryPath);
 
   // Generate playbook content
-  await ansibleService.generatePlaybookContent(data, playbookPath);
+  await ansibleService.generatePlaybookContent(
+    { ...data, uploadsPath },
+    playbookPath
+  );
 
   // Create .env file in uploads directory
   await fs.writeFile(path.join(uploadsPath, ".env"), data.env);

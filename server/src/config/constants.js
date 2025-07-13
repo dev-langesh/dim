@@ -21,6 +21,7 @@ const config = {
   otp,
   hashing,
   deployGroundPath: process.cwd() + "/deployGround",
+  fileUploadPath: process.cwd() + "/uploads",
   ansiblePath: process.cwd() + "/ansible",
 };
 

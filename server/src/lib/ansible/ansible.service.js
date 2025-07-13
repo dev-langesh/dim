@@ -2,7 +2,6 @@ const fs = require("fs").promises;
 
 async function generateInventoryContent(data, path) {
   const inventoryData = `
-[${data.appName}]
 ${data.appName} ansible_host=${data.ssh.host} ansible_port=${
     data.ssh.port || 22
   } ansible_user=${data.ssh.user} ${
@@ -22,7 +21,7 @@ ${data.appName} ansible_host=${data.ssh.host} ansible_port=${
 async function generatePlaybookContent(data, path) {
   const playbookData = `
 - name: Deploy ${data.appName}
-  hosts: ${data.appName}
+  hosts: all
   become: true
 
   vars:
@@ -37,7 +36,7 @@ async function generatePlaybookContent(data, path) {
 
   roles:
     ${data.repo ? "- git_clone" : "copy_file"}
-    - ${data.platform}
+    ${data.platform ? `- ${data.platform}` : ""}
     ${data.nginx ? "- nginx" : ""}
     ${data.ssl ? "- ssl" : ""}
     `;

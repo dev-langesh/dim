@@ -7,10 +7,10 @@ const {
   supportedDistributions,
 } = require("./constants/constants");
 const { shellService } = require("../../lib/shell/shell.service");
-const { v4: uuid } = require("uuid");
 const { fsService } = require("../../lib/fs/fs.service");
 const { config } = require("../../config/constants");
 const { ansibleService } = require("../../lib/ansible/ansible.service");
+const { uuid } = require("../../lib/uuid");
 
 async function checkOS(data) {
   const result = await sshService.runRemoteCommand(
@@ -42,10 +42,8 @@ async function checkOS(data) {
 }
 
 async function deployApplication(data) {
-  const localAppPath = path.join(
-    config.deployGroundPath,
-    data.appName + "-" + uuid()
-  );
+  const appId = data.appId || uuid(7);
+  const localAppPath = path.join(config.deployGroundPath, appId);
   const ansiblePath = config.ansiblePath;
   const inventoryPath = path.join(localAppPath, "inventory.ini");
   const playbookPath = path.join(localAppPath, "main.yml");

@@ -43,8 +43,18 @@ async function copy(src, dest) {
   }
 }
 
+async function chmod(filePath, mode) {
+  try {
+    await fs.chmod(filePath, mode);
+    console.log(`Changed permissions of ${filePath} to ${mode}`);
+  } catch (error) {
+    console.error(`Failed to change permissions of ${filePath}:`, error);
+  }
+}
+
 const fsService = {
   createDirectoryIfNotExists,
+  chmod,
   copy,
 };
 

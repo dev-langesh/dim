@@ -2,7 +2,6 @@ const { sshService } = require("../../lib/ssh/ssh.service");
 const fs = require("fs").promises;
 const path = require("path");
 const {
-  packageManagers,
   supportedOperatingSystems,
   supportedDistributions,
 } = require("./constants/constants");
@@ -11,34 +10,56 @@ const { fsService } = require("../../lib/fs/fs.service");
 const { config } = require("../../config/constants");
 const { ansibleService } = require("../../lib/ansible/ansible.service");
 const { uuid } = require("../../lib/uuid");
+const { AppError } = require("../../utils/error");
+const { DeployPipelineErrors } = require("../../errors/deployPipelineErrors");
 
 async function checkOS(data) {
-  const result = await sshService.runRemoteCommand(
-    data,
-    `uname -s && echo ::: && lsb_release -is`
-  );
+  try {
+    const sshData = {
+      ...data,
+    };
+    try {
+      if (sshData.privateKey) {
+        sshData.privateKey = await fs.readFile(sshData.privateKey, "utf8");
+      }
+    } catch (error) {
+      throw new AppError(DeployPipelineErrors.SSH_PRIVATE_KEY_NOT_FOUND);
+    }
 
-  if (!result) {
-    throw new Error("Failed to retrieve OS and distribution information");
+    const result = await sshService.runRemoteCommand(
+      sshData,
+      `uname -s && echo ::: && lsb_release -is`
+    );
+
+    if (!result) {
+      throw new AppError(DeployPipelineErrors.SSH_COMMAND_FAILED);
+    }
+
+    const [os, distribution] = result
+      .split(":::")
+      .map((s) => s.trim().toLowerCase());
+
+    if (!supportedOperatingSystems.includes(os)) {
+      throw new AppError(DeployPipelineErrors.UNSUPPORTED_OS);
+    }
+
+    if (!supportedDistributions.includes(distribution)) {
+      throw new AppError(DeployPipelineErrors.UNSUPPORTED_DISTRIBUTION);
+    }
+
+    return {
+      os,
+      distribution,
+    };
+  } catch (error) {
+    if (
+      error.message.includes("authentication") &&
+      error.message.includes("failed")
+    ) {
+      throw new AppError(DeployPipelineErrors.SSH_AUTHENTICATION_FAILED);
+    }
+    throw new AppError(DeployPipelineErrors.SSH_CONNECTION_FAILED);
   }
-
-  const [os, distribution] = result
-    .split(":::")
-    .map((s) => s.trim().toLowerCase());
-
-  if (!supportedOperatingSystems.includes(os)) {
-    throw new Error(`Unsupported operating system: ${os}`);
-  }
-
-  if (!supportedDistributions.includes(distribution)) {
-    throw new Error(`Unsupported distribution: ${distribution}`);
-  }
-
-  return {
-    os,
-    distribution,
-    packageManager: packageManagers[distribution],
-  };
 }
 
 async function deployApplication(data) {

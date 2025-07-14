@@ -11,11 +11,7 @@ router.post(
   deployController.checkOS
 );
 
-router.post(
-  "/",
-  validateInput(deployInputSchema.checkOsSchema), // Assuming the same schema is used for deployment
-  deployController.deployApplication
-);
+router.post("/", deployController.deployApplication);
 
 module.exports = {
   deployRouter: router,

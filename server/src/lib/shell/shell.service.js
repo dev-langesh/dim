@@ -23,11 +23,7 @@ function runShellCommand(command, args = []) {
 
     // On process exit
     child.on("close", (code) => {
-      if (code === 0) {
-        resolve(output);
-      } else {
-        reject(new Error(`Command failed with code ${code}\n${error}`));
-      }
+      resolve({ output, error });
     });
 
     // On error launching the process

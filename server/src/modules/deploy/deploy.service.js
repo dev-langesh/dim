@@ -95,6 +95,12 @@ async function deployApplication(data) {
     `ansible-playbook -i ${inventoryPath} ${playbookPath}`
   );
 
+  const error = await ansibleService.extractErrorFromLog(res.output);
+
+  if (error?.msg) {
+    throw new Error(error.msg);
+  }
+
   return res;
 }
 

@@ -46,9 +46,26 @@ async function generatePlaybookContent(data, path) {
   return playbookData;
 }
 
+async function extractErrorFromLog(log) {
+  let error;
+
+  const match = await log.match(/FAILED! => (\{.*?\})/s);
+
+  if (match) {
+    const jsonStr = match[1];
+    try {
+      error = JSON.parse(jsonStr);
+    } catch (e) {
+      console.error("Failed to parse JSON:", e);
+    }
+  }
+  return error;
+}
+
 const ansibleService = {
   generateInventoryContent,
   generatePlaybookContent,
+  extractErrorFromLog,
 };
 
 module.exports = { ansibleService };

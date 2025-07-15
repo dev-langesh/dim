@@ -90,6 +90,20 @@ async function loginUserWithGoogle(req, res) {
   res.json({ message: "User logged in successfully", user: sres.user });
 }
 
+async function githubOauthCallback(req, res) {
+  const sRes = await authService.githubOauthCallback(req.query.code);
+
+  return res.redirect(sRes.redirectUrl);
+}
+
+async function githubInstallAppCallback(req, res) {
+  const sRes = await authService.githubInstallAppCallback(
+    req.query.installation_id
+  );
+
+  return res.json(sRes);
+}
+
 async function logoutUser(req, res) {
   res.clearCookie("accessToken", cookieOptions);
   res.clearCookie("refreshToken", cookieOptions);
@@ -107,6 +121,8 @@ const authController = {
   loginUserWithGoogle: asyncHandler(loginUserWithGoogle),
   verifyOtpToResetPassword: asyncHandler(verifyOtpToResetPassword),
   resetPassword: asyncHandler(resetPassword),
+  githubOauthCallback: asyncHandler(githubOauthCallback),
+  githubInstallAppCallback: asyncHandler(githubInstallAppCallback),
 };
 
 module.exports = { authController };

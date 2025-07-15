@@ -2,20 +2,26 @@ require("dotenv").config();
 const { z } = require("zod");
 
 const envSchema = z.object({
-  PORT: z.string().min(2).max(4).default("8000"),
+  PORT: z.string().default("8000"),
   NODE_ENV: z.enum(["development", "production"]).default("development"),
-  MONGODB_URI: z.string().min(10).max(500).url(),
-  ACCESS_TOKEN_SECRET: z.string().min(10).max(100),
-  REFRESH_TOKEN_SECRET: z.string().min(10).max(100),
-  RESET_PASSWORD_TOKEN_SECRET: z.string().min(10).max(100),
+  MONGODB_URI: z.string().url(),
+  ACCESS_TOKEN_SECRET: z.string(),
+  REFRESH_TOKEN_SECRET: z.string(),
+  RESET_PASSWORD_TOKEN_SECRET: z.string(),
   ACCESS_TOKEN_EXPIRY: z.string().default("15m"),
   REFRESH_TOKEN_EXPIRY: z.string().default("7d"),
   RESET_PASSWORD_TOKEN_EXPIRY: z.string().default("15m"),
-  GOOGLE_CLIENT_ID: z.string().min(10).max(100).optional(),
-  SMTP_HOST: z.string().min(3).max(50),
-  SMTP_PORT: z.string().min(1).max(5),
-  SMTP_USER: z.string().min(3).max(100),
-  SMTP_PASS: z.string().min(3).max(100),
+  GOOGLE_CLIENT_ID: z.string().optional(),
+  SMTP_HOST: z.string(),
+  SMTP_PORT: z.string(),
+  SMTP_USER: z.string(),
+  SMTP_PASS: z.string(),
+  GITHUB_CLIENT_ID: z.string(),
+  GITHUB_CLIENT_SECRET: z.string(),
+  GITHUB_APP_NAME: z.string(),
+  GITHUB_APP_ID: z.string(),
+  GITHUB_APP_CLIENT_ID: z.string(),
+  GITHUB_APP_CLIENT_SECRET: z.string(),
 });
 
 const env = envSchema.safeParse(process.env);

@@ -1,3 +1,5 @@
+const path = require("path");
+
 const roles = {
   ADMIN: "admin",
   USER: "user",
@@ -20,9 +22,10 @@ const config = {
   roles,
   otp,
   hashing,
-  deployGroundPath: process.cwd() + "/deployGround",
-  fileUploadPath: process.cwd() + "/uploads",
-  ansiblePath: process.cwd() + "/ansible",
+  deployGroundPath: path.join(process.cwd(), "deployGround"),
+  fileUploadPath: path.join(process.cwd(), "uploads"),
+  ansiblePath: path.join(process.cwd(), "ansible"),
+  GITHUB_APP_PRIVATE_KEY_PATH: path.join(process.cwd(), "secrets", "github_app_private_key.pem"),
 };
 
 module.exports = {

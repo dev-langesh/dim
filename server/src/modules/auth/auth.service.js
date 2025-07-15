@@ -7,6 +7,9 @@ const bcrypt = require("bcrypt");
 const { OAuth2Client } = require("google-auth-library");
 const { otpService } = require("../otp/otp.service");
 const { generateHash } = require("../../utils/auth/hash");
+const axios = require("axios");
+const fs = require("fs").promises;
+const { config } = require("../../config/constants");
 
 async function registerUser(data) {
   const payload = { ...data };
@@ -154,6 +157,86 @@ async function verifyTokenAndResetPassword({ password, token }) {
   await userService.resetPassword(decoded.userId, hashedPassword);
 }
 
+async function githubOauthCallback(code) {
+  const tokenRes = await axios.post(
+    `https://github.com/login/oauth/access_token`,
+    {
+      client_id: env.GITHUB_CLIENT_ID,
+      client_secret: env.GITHUB_CLIENT_SECRET,
+      code,
+    },
+    {
+      headers: {
+        Accept: "application/json",
+      },
+    }
+  );
+
+  const accessToken = tokenRes.data.access_token;
+
+  // Optional: fetch user info
+  const userRes = await axios.get("https://api.github.com/user", {
+    headers: {
+      Authorization: `token ${accessToken}`,
+    },
+  });
+
+  const username = userRes.data.login;
+  console.log(`GitHub user: ${username}`);
+
+  // Optional: store token for the user in your DB
+
+  // Redirect user to install your GitHub App
+  const installUrl = `https://github.com/apps/${env.GITHUB_APP_NAME}/installations/new`;
+
+  return {
+    redirectUrl: installUrl,
+    accessToken, // optionally include in response if popup flow
+    username,
+  };
+}
+
+async function githubInstallAppCallback(installationId) {
+  console.log("Received installation_id:", installationId);
+  const { createAppAuth } = await import("@octokit/auth-app");
+  const { Octokit } = await import("@octokit/rest");
+
+  const appId = env.GITHUB_APP_ID;
+  const privateKey = await fs.readFile(
+    config.GITHUB_APP_PRIVATE_KEY_PATH,
+    "utf8"
+  );
+
+  const octokit = new Octokit({
+    authStrategy: createAppAuth,
+    auth: {
+      appId,
+      privateKey,
+      installationId,
+    },
+  });
+
+  // Generate installation token
+  const { token } = await octokit.auth({
+    type: "installation",
+  });
+
+  console.log("Installation token:", token);
+
+  // List repos app has access to
+  const repos = await octokit.request("GET /installation/repositories");
+  console.log(
+    "Repos:",
+    repos.data.repositories.map((r) => r.full_name)
+  );
+
+  return {
+    token,
+    installationId,
+    repos: repos.data.repositories.map((r) => r.full_name),
+  };
+}
+
 const authService = {
   registerUser,
   loginUser,
@@ -163,6 +246,8 @@ const authService = {
   loginWithGoogle,
   verifyOtpToResetPassword,
   verifyTokenAndResetPassword,
+  githubOauthCallback,
+  githubInstallAppCallback,
 };
 
 module.exports = { authService };

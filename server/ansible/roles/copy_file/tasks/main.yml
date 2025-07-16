@@ -1,7 +1,25 @@
-- name: Create application directory
+- name: Ensure destination directory exists
   file:
     path: "{{ app_dir }}"
     state: directory
+
+- name: Check if destination directory exists
+  stat:
+    path: "{{ app_dir }}"
+  register: dir_stat
+
+- name: Check if directory is not empty
+  find:
+    paths: "{{ app_dir }}"
+    file_type: any
+    recurse: no
+  when: dir_stat.stat.exists
+  register: dir_contents
+
+- name: Fail if destination directory is not empty
+  fail:
+    msg: "The destination directory {{ app_dir }} is not empty. Aborting."
+  when: dir_contents.matched > 0
 
 - name: Copy zip file
   copy:
@@ -13,7 +31,7 @@
     src: "{{ app_dir }}/{{ app_name }}.zip"
     dest: "{{ app_dir }}"
     remote_src: yes
-    extra_opts: [ "-j" ] 
+    extra_opts: [ "-j" ]
 
 - name: Delete zip file
   file:

@@ -33,9 +33,10 @@ async function generatePlaybookContent(data, path) {
     ssl_enabled: ${data.ssl}
     app_port: ${data.appPort}
     env_file: ${data.uploadsPath}/.env
+    source_code: ${data.sourceCode}
 
   roles:
-    ${data.repo ? "- git_clone" : "copy_file"}
+    ${data.repo ? "- git_clone" : "- copy_file"}
     ${data.platform ? `- ${data.platform}` : ""}
     ${data.nginx ? "- nginx" : ""}
     ${data.ssl ? "- ssl" : ""}

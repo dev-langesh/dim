@@ -21,20 +21,27 @@ ${data.appName} ansible_host=${data.ssh.host} ansible_port=${
 
 async function generatePlaybookContent(data, playBookPath) {
   const vars = [];
+  const skipKeys = [
+    "uploads_path",
+    "app_dir",
+    "platform",
+    "nginx",
+    "env",
+    "source_dir",
+  ];
+  const app_dir = data.appDir || path.join("var", "www", data.appName);
 
-  vars.push(`app_name: ${data.appName}`);
-  vars.push(`app_dir: ${data.appDir || path.join("var", "www", data.appName)}`);
-  if (data.gitRepo) vars.push(`git_repo: ${data.gitRepo}`);
-  if (data.gitBranch) vars.push(`git_branch: ${data.gitBranch}`);
-  if (data.sourceCode) vars.push(`source_code: ${data.sourceCode}`);
-  if (data.sourceDir)
-    vars.push(`source_dir: ${path.join(data.appDir, data.sourceDir)}`);
-  if (data.domain) vars.push(`domain_name: ${data.domain}`);
-  if (data.certEmail) vars.push(`cert_email: ${data.certEmail}`);
-  if (typeof data.ssl !== "undefined") vars.push(`ssl_enabled: ${data.ssl}`);
-  if (data.appPort) vars.push(`app_port: ${data.appPort}`);
-  if (data.uploadsPath)
-    vars.push(`env_file: ${path.join(data.uploadsPath, ".env")}`);
+  const payload = { ...data };
+
+  skipKeys.forEach((key) => delete payload[key]);
+
+  vars.push(`app_dir: ${app_dir}`);
+  vars.push(`source_dir: ${path.join(app_dir, data.source_dir)}`);
+  if(data.env) vars.push(`env_file: ${path.join(data.uploads_path, ".env")}`);
+
+  for (const [key, value] of Object.entries(payload)) {
+    vars.push(`${key}: ${value}`);
+  }
 
   const roles = [
     data.gitRepo ? "git_clone" : "copy_file",

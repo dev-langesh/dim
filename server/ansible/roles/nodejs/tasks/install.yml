@@ -67,4 +67,4 @@
 - name: Install app dependencies
   shell: npm install
   args:
-    chdir: "{{ app_dir }}"
+    chdir: "{{ source_dir }}"

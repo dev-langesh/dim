@@ -4,7 +4,7 @@
 - name: Copy .env file
   copy:
     src: "{{ env_file }}"
-    dest: "{{ app_dir }}/.env"
+    dest: "{{ source_dir }}/.env"
   when: env_file is defined
 
 - name: Start Node app with PM2
@@ -12,6 +12,6 @@
     pm2 start npm --name {{ app_name }} -- run {{ app_start_script | default('start') }}
     pm2 save --force
   args:
-    chdir: "{{ app_dir }}"
+    chdir: "{{ source_dir }}"
   environment:
     NODE_ENV: "{{ node_env | default('production') }}"

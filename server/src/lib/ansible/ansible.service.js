@@ -1,4 +1,5 @@
 const fs = require("fs").promises;
+const path = require("path");
 
 async function generateInventoryContent(data, path) {
   const inventoryData = `
@@ -18,20 +19,22 @@ ${data.appName} ansible_host=${data.ssh.host} ansible_port=${
   return inventoryData;
 }
 
-async function generatePlaybookContent(data, path) {
+async function generatePlaybookContent(data, playBookPath) {
   const vars = [];
 
-  if (data.appName) vars.push(`app_name: ${data.appName}`);
-  if (data.appDir || data.appName)
-    vars.push(`app_dir: ${data.appDir || `/var/www/${data.appName}`}`);
+  vars.push(`app_name: ${data.appName}`);
+  vars.push(`app_dir: ${data.appDir || path.join("var", "www", data.appName)}`);
   if (data.gitRepo) vars.push(`git_repo: ${data.gitRepo}`);
   if (data.gitBranch) vars.push(`git_branch: ${data.gitBranch}`);
   if (data.sourceCode) vars.push(`source_code: ${data.sourceCode}`);
+  if (data.sourceDir)
+    vars.push(`source_dir: ${path.join(data.appDir, data.sourceDir)}`);
   if (data.domain) vars.push(`domain_name: ${data.domain}`);
   if (data.certEmail) vars.push(`cert_email: ${data.certEmail}`);
   if (typeof data.ssl !== "undefined") vars.push(`ssl_enabled: ${data.ssl}`);
   if (data.appPort) vars.push(`app_port: ${data.appPort}`);
-  if (data.uploadsPath) vars.push(`env_file: ${data.uploadsPath}/.env`);
+  if (data.uploadsPath)
+    vars.push(`env_file: ${path.join(data.uploadsPath, ".env")}`);
 
   const roles = [
     data.gitRepo ? "git_clone" : "copy_file",
@@ -52,10 +55,9 @@ ${vars.map((v) => `    ${v}`).join("\n")}
 ${roles.map((r) => `    - ${r}`).join("\n")}
 `.trim();
 
-  await fs.writeFile(path, playbook);
+  await fs.writeFile(playBookPath, playbook);
   return playbook;
 }
-
 
 async function extractErrorFromLog(log) {
   let error;

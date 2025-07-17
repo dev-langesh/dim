@@ -1,4 +1,5 @@
 const { spawn } = require("child_process");
+const { ansibleService } = require("../ansible/ansible.service");
 
 function runShellCommand(command, args = []) {
   return new Promise((resolve, reject) => {
@@ -7,26 +8,46 @@ function runShellCommand(command, args = []) {
     let logs = [];
     let errorLogs = [];
 
-    // Listen to stdout data
+    let lineQueue = [];
+
+    const handleLine = (line) => {
+      const result = ansibleService.processAnsibleLine(line);
+      console.log(result);
+      if (!result) return;
+
+      lineQueue.push(result);
+
+      // If status or error follows task, format & flush
+      if (lineQueue.length === 2 && lineQueue[0].type === "task") {
+        const output = `${lineQueue[0].content}\n${lineQueue[1].content}`;
+        logs.push(output);
+        console.log(output);
+        lineQueue = [];
+      } else if (lineQueue.length > 2) {
+        // flush if queue has irrelevant or unpaired items
+        lineQueue.shift();
+      }
+    };
+
+    // Handle stdout
     child.stdout.on("data", (data) => {
       const chunk = data.toString();
-      logs.push(chunk);
-      console.log(`[stdout] ${chunk}`); // Optional: for live console logging
+      const lines = chunk.split(/\r?\n/).filter(Boolean);
+      lines.forEach(handleLine);
     });
 
-    // Listen to stderr data
+    // Handle stderr (error JSON or other stderr lines)
     child.stderr.on("data", (data) => {
       const chunk = data.toString();
+      const lines = chunk.split(/\r?\n/).filter(Boolean);
+      lines.forEach(handleLine); // Some errors may come here
       errorLogs.push(chunk);
-      console.error(`[stderr] ${chunk}`); // Optional: for live error logging
     });
 
-    // On process exit
     child.on("close", (code) => {
       resolve({ logs, errorLogs });
     });
 
-    // On error launching the process
     child.on("error", (err) => {
       reject(err);
     });

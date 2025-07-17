@@ -10,12 +10,14 @@ const { connectDb } = require("./lib/db/connectDb");
 const cookieParser = require("cookie-parser");
 const { errorHandler } = require("./middleware/errorHandler.middleware");
 const { init } = require("./config/init");
+const { initSocket } = require("./lib/socket.io/initSocket");
 
 connectDb();
 init();
 
 const app = express();
 const server = createServer(app);
+initSocket(server);
 
 app.use(morgan(env.NODE_ENV === "production" ? "combined" : "dev"));
 app.use(helmet());

@@ -82,7 +82,7 @@ async function deployApplication(data) {
   // Generate inventory and playbook content
   await ansibleService.generateInventoryContent(data, inventoryPath);
 
-  // Generate playbook content
+  // Generate playbook content[
   await ansibleService.generatePlaybookContent(
     { ...data.appDetails, uploads_path: uploadsPath },
     playbookPath
@@ -91,16 +91,10 @@ async function deployApplication(data) {
   // Create .env file in uploads directory
   await fs.writeFile(path.join(uploadsPath, ".env"), data.appDetails.env);
 
-  const res = await shellService.runShellCommand(
-    `ansible-playbook -i ${inventoryPath} ${playbookPath}`
-  );
+  const res = await ansibleService.play(appId, inventoryPath, playbookPath);
 
-  const error = await ansibleService.extractErrorFromLog(
-    res.logs[res.logs.length - 1]
-  );
-
-  if (error?.msg) {
-    throw new Error(error.msg);
+  if (res?.error?.msg) {
+    throw new Error(res.error.msg);
   }
 
   return res;

@@ -19,8 +19,8 @@ async function checkOS(data) {
       ...data,
     };
     try {
-      if (sshData.privateKey) {
-        sshData.privateKey = await fs.readFile(sshData.privateKey, "utf8");
+      if (sshData.private_key) {
+        sshData.private_key = await fs.readFile(sshData.private_key, "utf8");
       }
     } catch (error) {
       throw new AppError(DeployPipelineErrors.SSH_PRIVATE_KEY_NOT_FOUND);
@@ -63,7 +63,7 @@ async function checkOS(data) {
 }
 
 async function deployApplication(data) {
-  const appId = data.appId || uuid(7);
+  const appId = data.appDetails.app_id;
   const localAppPath = path.join(config.deployGroundPath, appId);
   const ansiblePath = config.ansiblePath;
   const inventoryPath = path.join(localAppPath, "inventory.ini");
@@ -84,18 +84,20 @@ async function deployApplication(data) {
 
   // Generate playbook content
   await ansibleService.generatePlaybookContent(
-    { ...data, uploadsPath },
+    { ...data.appDetails, uploads_path: uploadsPath },
     playbookPath
   );
 
   // Create .env file in uploads directory
-  await fs.writeFile(path.join(uploadsPath, ".env"), data.env);
+  await fs.writeFile(path.join(uploadsPath, ".env"), data.appDetails.env);
 
   const res = await shellService.runShellCommand(
     `ansible-playbook -i ${inventoryPath} ${playbookPath}`
   );
 
-  const error = await ansibleService.extractErrorFromLog(res.output);
+  const error = await ansibleService.extractErrorFromLog(
+    res.logs[res.logs.length - 1]
+  );
 
   if (error?.msg) {
     throw new Error(error.msg);

@@ -1,6 +1,17 @@
 - name: Install Git
   include_tasks: install.yml
 
+- name: Check Git repository and branch
+  shell:
+    git ls-remote {{ git_repo }} --heads {{ git_branch | default('main') }}
+  register: git_check
+  ignore_errors: true
+
+- name: Fail if Git repository or branch is invalid
+  fail:
+    msg: "The Git repository '{{ git_repo }}' or branch '{{ git_branch | default('main') }}' is invalid."
+  when: git_check.rc != 0
+
 - name: Clone Git repository
   git:
     repo: "{{ git_repo }}"

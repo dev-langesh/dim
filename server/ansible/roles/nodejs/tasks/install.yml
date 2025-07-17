@@ -64,7 +64,35 @@
 - name: Enable PM2 to start on boot
   command: pm2 startup
 
+# Step 5: Install application dependencies and setup
+- name: Check source directory
+  stat:
+    path: "{{ source_dir }}"
+  register: source_dir_check
+
+- name: Fail if source directory does not exist
+  fail:
+    msg: "The source directory '{{ source_dir }}' does not exist."
+  when: not source_dir_check.stat.exists
+
+- name: Check package.json
+  stat:
+    path: "{{ source_dir }}/package.json"
+  register: package_json_check
+
+- name: Fail if package.json is missing
+  fail:
+    msg: "package.json file is missing in '{{ source_dir }}'."
+  when: not package_json_check.stat.exists
+
 - name: Install app dependencies
-  shell: npm install
+  shell: "{{ install_script | default('npm install')}}"
   args:
     chdir: "{{ source_dir }}"
+  ignore_errors: true
+  register: install_result
+
+- name: Fail if app dependencies installation failed
+  fail:
+    msg: "Failed to install app dependencies: {{ install_result.stderr }}"
+  when: install_result.rc != 0

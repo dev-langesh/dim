@@ -7,11 +7,44 @@
     dest: "{{ source_dir }}/.env"
   when: env_file is defined
 
+- name: Build the app
+  shell: "{{ build_script }}"
+  args:
+    chdir: "{{ source_dir }}"
+  when: build_script is defined
+  ignore_errors: true
+  register: build_result
+
+- name: Fail if build script fails
+  fail:
+    msg: "Failed to build the app: {{ build_result.stderr }}"
+  when: build_result.rc != 0
+
+- name: Test the app
+  shell: "{{ test_script }}"
+  args:
+    chdir: "{{ source_dir }}"
+  when: test_script is defined
+  ignore_errors: true
+  register: test_result
+
+- name: Fail if test script fails
+  fail:
+    msg: "Failed to test the app: {{ test_result.stderr }}"
+  when: test_result.rc != 0
+
 - name: Start Node app with PM2
   shell: |
-    pm2 start npm --name {{ app_name }} -- run {{ app_start_script | default('start') }}
+    pm2 start npm --name {{ app_name }} -- run {{ start_script | default('start') }}
     pm2 save --force
   args:
     chdir: "{{ source_dir }}"
   environment:
     NODE_ENV: "{{ node_env | default('production') }}"
+  ignore_errors: true
+  register: pm2_start_result
+
+- name: Fail if PM2 start command fails
+  fail:
+    msg: "Failed to start the app: {{ pm2_start_result.stderr }}"
+  when: pm2_start_result.rc != 0

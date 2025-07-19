@@ -28,7 +28,6 @@ async function generatePlaybookContent(data, playBookPath) {
     "app_dir",
     "platform",
     "nginx",
-    "env",
     "source_dir",
   ];
   const app_dir = data.app_dir || path.join("var", "www", data.app_name);
@@ -42,11 +41,25 @@ async function generatePlaybookContent(data, playBookPath) {
   if (data.env) vars.push(`env_file: ${path.join(data.uploads_path, ".env")}`);
 
   for (const [key, value] of Object.entries(payload)) {
+    if (key === "env") {
+      let env = `env:\n`;
+      for (const [envKey, envValue] of Object.entries(value)) {
+        if (envValue === undefined || envValue === null) {
+          console.warn(`Skipping undefined env variable: ${envKey}`);
+          continue;
+        }
+        env += `    ${envKey}: ${envValue}\n`;
+      }
+      vars.push(env);
+      continue;
+    }
+
     vars.push(`${key}: ${value}`);
   }
 
   const roles = [
-    data.git_repo ? "git_clone" : "copy_file",
+    data.git_repo && "git_clone",
+    data.source_code && "source_code",
     data.platform,
     data.nginx && "nginx",
     data.ssl && "ssl",
@@ -142,7 +155,6 @@ function createAnsibleLogHandler(appId) {
       }
 
       const output = `${currentTask.content}\n${parsed.content}`;
-      console.log(output);
       io.emit(`app-logs-${appId}`, output);
 
       currentTask = null; // Clear after pairing
@@ -154,12 +166,9 @@ function createAnsibleLogHandler(appId) {
       try {
         const json = JSON.parse(parsed.content);
         const errorOutput = JSON.stringify(json, null, 2);
-        console.log(errorOutput);
         io.emit(`app-logs-${appId}`, errorOutput);
         return json;
       } catch (e) {
-        // Non-JSON error fallback
-        console.log(parsed.content);
         io.emit(`app-logs-${appId}`, parsed.content);
         return parsed.content;
       }
@@ -178,6 +187,7 @@ function play(appId, inventoryPath, playbookPath) {
 
     // Handle stdout
     child.stdout.on("data", (data) => {
+      console.log(data.toString());
       const lines = data.toString().split(/\r?\n/);
 
       lines.forEach((line) => {
@@ -195,8 +205,6 @@ function play(appId, inventoryPath, playbookPath) {
     });
 
     child.on("close", (code) => {
-      console.log(logs);
-      console.log("code", code);
       if (code !== 0) {
         resolve({ error: logs[logs.length - 1] });
       }

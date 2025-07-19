@@ -1,16 +1,13 @@
-- name: Install Docker (Debian)
-  apt:
-    name: docker.io
-    state: present
-    update_cache: yes
-  when: ansible_facts['os_family'] == 'Debian'
+- name: Check supported OS
+  assert:
+    that:
+      - ansible_facts['distribution'] in ['Ubuntu', 'Debian', 'CentOS']
+    fail_msg: "Unsupported OS. Supported distributions are Ubuntu, Debian, and CentOS."
 
-- name: Install Docker (RedHat)
-  yum:
-    name: docker
-    state: present
-  when: ansible_facts['os_family'] == 'RedHat'
-
+- name: Install Docker (Ubuntu)
+  include_tasks: install_ubuntu.yml
+  when: ansible_facts['distribution'] == 'Ubuntu'
+  
 - name: Start and enable Docker
   service:
     name: docker

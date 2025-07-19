@@ -1,0 +1,17 @@
+- name: Check if Docker is installed
+  shell: |
+     if command -v docker &> /dev/null; then
+      exit 0  # Docker is installed
+     else
+      exit 1  # Docker not installed
+     fi
+  register: docker_check
+  ignore_errors: true
+
+- name: Install Docker
+  include_tasks: install.yml
+  when: docker_check.failed or docker_check.rc == 1
+
+- name: Pull Docker image and deploy container
+  include_tasks: deploy_image.yml
+  when: docker_image_name is defined and docker_image_tag is defined

@@ -69,6 +69,17 @@ async function deployApplication(data) {
   const inventoryPath = path.join(localAppPath, "inventory.ini");
   const playbookPath = path.join(localAppPath, "main.yml");
   const uploadsPath = path.join(localAppPath, "uploads");
+  let env = "";
+
+  if (data.appDetails.env) {
+    for (const [key, value] of Object.entries(data.appDetails.env)) {
+      if (value === undefined || value === null) {
+        console.warn(`Skipping undefined env variable: ${key}`);
+        continue;
+      }
+      env += `${key}=${value}\n`;
+    }
+  }
 
   // Create necessary directories
   await fsService.createDirectoryIfNotExists(localAppPath);
@@ -89,7 +100,7 @@ async function deployApplication(data) {
   );
 
   // Create .env file in uploads directory
-  await fs.writeFile(path.join(uploadsPath, ".env"), data.appDetails.env);
+  await fs.writeFile(path.join(uploadsPath, ".env"), env);
 
   const res = await ansibleService.play(appId, inventoryPath, playbookPath);
 

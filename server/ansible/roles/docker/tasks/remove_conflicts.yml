@@ -1,0 +1,10 @@
+- name: Remove conflicting packages
+  apt:
+    name:
+      - docker.io
+      - docker-doc
+      - docker-compose
+      - podman-docker
+      - containerd
+      - runc
+    state: absent

@@ -4,33 +4,37 @@
       - ansible_facts['distribution'] in ['Ubuntu', 'Debian', 'CentOS']
     fail_msg: "Unsupported OS. Supported distributions are Ubuntu, Debian, and CentOS."
 
-- name: Get total system memory in MB
-  ansible.builtin.shell: "cat /proc/meminfo | awk '/MemAvailable/ {print int($2 / 1024)}'"
-  register: available_ram
-  changed_when: false
+# - name: Get total system memory in MB
+#   ansible.builtin.shell: "cat /proc/meminfo | awk '/MemAvailable/ {print int($2 / 1024)}'"
+#   register: available_ram
+#   changed_when: false
 
-- name: Get available disk space in MB
-  ansible.builtin.shell: "df --output=avail / | tail -1 | awk '{print int($1 / 1024)}'"
-  register: available_disk
-  changed_when: false
+# - name: Get available disk space in MB
+#   ansible.builtin.shell: "df --output=avail / | tail -1 | awk '{print int($1 / 1024)}'"
+#   register: available_disk
+#   changed_when: false
 
-- name: Debug RAM and disk values
-  debug:
-    msg: "RAM: {{ available_ram.stdout }} MB, Disk: {{ available_disk.stdout }} MB"
+# - name: Debug RAM and disk values
+#   debug:
+#     msg: "RAM: {{ available_ram.stdout }} MB, Disk: {{ available_disk.stdout }} MB"
 
-- name: Fail if available RAM is less than 1048 MB (1GB)
-  fail:
-    msg: "Insufficient RAM. At least 1GB is required, but only {{ available_ram.stdout }} MB is available."
-  when: available_ram.stdout | int < 1048
+# - name: Fail if available RAM is less than 1048 MB (1GB)
+#   fail:
+#     msg: "Insufficient RAM. At least 1GB is required, but only {{ available_ram.stdout }} MB is available."
+#   when: available_ram.stdout | int < 1048
 
-- name: Fail if available disk space is less than 5GB
-  fail:
-    msg: "Insufficient disk space. At least 5GB is required, but only {{ available_disk.stdout }} MB is available."
-  when: available_disk.stdout | int < 5120
+# - name: Fail if available disk space is less than 5GB
+#   fail:
+#     msg: "Insufficient disk space. At least 5GB is required, but only {{ available_disk.stdout }} MB is available."
+#   when: available_disk.stdout | int < 5120
 
 - name: Install Docker (Ubuntu)
   include_tasks: install_ubuntu.yml
   when: ansible_facts['distribution'] == 'Ubuntu'
+
+- name: Install Docker (Debian)
+  include_tasks: install_debian.yml
+  when: ansible_facts['distribution'] == 'Debian'
 
 - name: Start and enable Docker
   service:

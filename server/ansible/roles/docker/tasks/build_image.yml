@@ -8,10 +8,6 @@
     source: build
     state: present
 
-- name: debug
-  debug:
-    msg: "{{ env }}"
-
 - name: Deploy Docker container
   docker_container:
     name: "{{ app_name }}"

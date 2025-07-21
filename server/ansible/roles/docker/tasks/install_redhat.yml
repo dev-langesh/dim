@@ -1,0 +1,27 @@
+- name: Check OS version
+  fail:
+    msg: "Unsupported OS version. Minimum supported version is RHEL 8 and 9."
+  when: (ansible_facts['distribution_version'] is version('8', '<') or
+         ansible_facts['distribution_version'] is version('10', '>='))
+
+- name: Remove conflicting packages
+  shell: |
+    dnf -y remove docker \
+              docker-client \
+              docker-client-latest \
+              docker-common \
+              docker-latest \
+              docker-latest-logrotate \
+              docker-logrotate \
+              docker-engine \
+              podman \
+              runc
+
+- name: Setup Official Docker repository
+  shell: |
+    dnf -y install dnf-plugins-core
+    dnf config-manager --add-repo https://download.docker.com/linux/rhel/docker-ce.repo
+
+- name: Install Docker
+  shell: |
+    dnf install docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin -y

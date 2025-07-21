@@ -1,8 +1,11 @@
+- name: Debug installation
+  debug:
+    msg: "Installing Docker on {{ ansible_facts['distribution'] }} version {{ ansible_facts['distribution_version'] }}"
+
 - name: Check supported OS
-  assert:
-    that:
-      - ansible_facts['distribution'] in ['Ubuntu', 'Debian', 'CentOS']
-    fail_msg: "Unsupported OS. Supported distributions are Ubuntu, Debian, and CentOS."
+  fail:
+    msg: "Unsupported OS. Supported distributions are Ubuntu, Debian, CentOS, and RedHat."
+  when: ansible_facts['distribution'] not in ['Ubuntu', 'Debian', 'CentOS', "RedHat"]
 
 # - name: Get total system memory in MB
 #   ansible.builtin.shell: "cat /proc/meminfo | awk '/MemAvailable/ {print int($2 / 1024)}'"
@@ -35,6 +38,10 @@
 - name: Install Docker (Debian)
   include_tasks: install_debian.yml
   when: ansible_facts['distribution'] == 'Debian'
+
+- name: Install Docker (RedHat)
+  include_tasks: install_redhat.yml
+  when: ansible_facts['distribution'] == 'RedHat'
 
 - name: Start and enable Docker
   service:

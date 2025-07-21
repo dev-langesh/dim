@@ -1,8 +1,7 @@
 - name: Check OS version
-  assert:
-    that:
-      - ansible_facts['distribution_version'] is version('20.04', '>=')
-    fail_msg: "Unsupported OS version. Minimum supported version is 20.04."
+  fail:
+    msg: "Unsupported OS version. Minimum supported version is Ubuntu 20.04."
+  when: ansible_facts['distribution_version'] is version('20.04', '<')
 
 - name: Remove conflicting packages
   apt:
@@ -29,4 +28,11 @@
     apt-get update
 
 - name: Install Docker
-  include_tasks: install_docker.yml
+  apt:
+    name:
+      - docker-ce
+      - docker-ce-cli
+      - containerd.io
+      - docker-buildx-plugin
+      - docker-compose-plugin
+    state: present

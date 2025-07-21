@@ -5,7 +5,15 @@
     fail_msg: "Unsupported OS version. Minimum supported version is 20.04."
 
 - name: Remove conflicting packages
-  include_tasks: remove_conflicts.yml
+  apt:
+    name:
+      - docker.io
+      - docker-doc
+      - docker-compose
+      - podman-docker
+      - containerd
+      - runc
+    state: absent
 
 - name: Setup Official Docker repository
   shell: |

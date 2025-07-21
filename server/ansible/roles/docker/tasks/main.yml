@@ -14,4 +14,8 @@
 
 - name: Pull Docker image and deploy container
   include_tasks: deploy_image.yml
-  when: docker_image_name is defined and docker_image_tag is defined
+  when: build_docker_image is not defined or build_docker_image == false
+
+- name: Build Docker image
+  include_tasks: build_image.yml
+  when: build_docker_image is defined and build_docker_image == true

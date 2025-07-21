@@ -48,7 +48,7 @@ async function generatePlaybookContent(data, playBookPath) {
           console.warn(`Skipping undefined env variable: ${envKey}`);
           continue;
         }
-        env += `    ${envKey}: ${envValue}\n`;
+        env += `      ${envKey}: "${envValue}"\n`;
       }
       vars.push(env);
       continue;

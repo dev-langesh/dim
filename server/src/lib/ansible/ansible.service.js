@@ -102,8 +102,8 @@ function processAnsibleLine(line) {
 
   const taskRegex = /^TASK \[(.+?)\]/;
   const statusRegex = /^(ok|changed|skipping): \[.+?\]/;
-  const errorJsonRegex = /FAILED! => (.+)$/;
-
+  const errorJsonRegex = /(?:FAILED|UNREACHABLE)! => (.+)$/;
+  
   if (
     line.startsWith("PLAY [") ||
     line.startsWith("TASK [Gathering Facts]") ||
@@ -177,7 +177,7 @@ function createAnsibleLogHandler(appId) {
 }
 
 function play(appId, inventoryPath, playbookPath) {
-  const command = `ansible-playbook -i ${inventoryPath} ${playbookPath}`;
+  const command = `export ANSIBLE_HOST_KEY_CHECKING=False && ansible-playbook -i ${inventoryPath} ${playbookPath}`;
   const handler = createAnsibleLogHandler(appId);
 
   return new Promise((resolve, reject) => {

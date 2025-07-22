@@ -13,28 +13,37 @@
     state: started
     enabled: yes
 
-- name: Pull Docker Image 
-  include_tasks: pull_image.yml
-  when: build_docker_image is not defined or build_docker_image == false
+- name: Start Docker Compose services
+  command: docker compose up -d
+  args:
+    chdir: "{{ source_dir }}"
+  when: docker_compose == true
 
-- name: Build Docker Image
-  include_tasks: build_image.yml
-  when: build_docker_image is defined and build_docker_image == true
+- name: Docker Tasks
+  block:
+    - name: Pull Docker Image 
+      include_tasks: pull_image.yml
+      when: build_docker_image is not defined or build_docker_image == false
 
-- name: Create Docker Network
-  docker_network:
-    name: "{{ item.name }}"
-  loop: "{{ docker_networks | default([]) }}"
+    - name: Build Docker Image
+      include_tasks: build_image.yml
+      when: build_docker_image == true
 
-- name: Deploy Docker container
-  docker_container:
-    name: "{{ app_name }}"
-    image: "{{ docker_image_name | default(app_name) }}:{{ docker_image_tag | default('latest') }}"
-    state: started
-    restart_policy: always
-    ports:
-      - "{{ app_port }}:{{ docker_container_port | default(app_port) }}"
-    env: "{{ env }}"
-    volumes: "{{ docker_volumes | default(omit) }}"
-    networks: "{{ docker_networks | default(omit) }}"
-    recreate: true
+    - name: Create Docker Network
+      docker_network:
+        name: "{{ item.name }}"
+      loop: "{{ docker_networks | default([]) }}"
+
+    - name: Deploy Docker container
+      docker_container:
+        name: "{{ app_name }}"
+        image: "{{ docker_image_name | default(app_name) }}:{{ docker_image_tag | default('latest') }}"
+        state: started
+        restart_policy: always
+        ports:
+          - "{{ app_port }}:{{ docker_container_port | default(app_port) }}"
+        env: "{{ env }}"
+        volumes: "{{ docker_volumes | default(omit) }}"
+        networks: "{{ docker_networks | default(omit) }}"
+        recreate: true
+  when: docker_compose is not defined or docker_compose == false

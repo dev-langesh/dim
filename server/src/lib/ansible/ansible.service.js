@@ -29,31 +29,48 @@ async function generatePlaybookContent(data, playBookPath) {
     "platform",
     "nginx",
     "source_dir",
+    "env",
+    "docker_volumes",
+    "docker_networks",
   ];
   const app_dir = data.app_dir || path.join("var", "www", data.app_name);
-
+  let env = `env:\n`;
+  let docker_volumes = `docker_volumes:\n`;
+  let docker_networks = `docker_networks:\n`;
   const payload = { ...data };
 
   skipKeys.forEach((key) => delete payload[key]);
 
   vars.push(`app_dir: ${app_dir}`);
   vars.push(`source_dir: ${path.join(app_dir, data.source_dir || "./")}`);
+
   if (data.env) vars.push(`env_file: ${path.join(data.uploads_path, ".env")}`);
 
-  for (const [key, value] of Object.entries(payload)) {
-    if (key === "env") {
-      let env = `env:\n`;
-      for (const [envKey, envValue] of Object.entries(value)) {
-        if (envValue === undefined || envValue === null) {
-          console.warn(`Skipping undefined env variable: ${envKey}`);
-          continue;
-        }
-        env += `      ${envKey}: "${envValue}"\n`;
-      }
-      vars.push(env);
+  for (const [envKey, envValue] of Object.entries(data.env || {})) {
+    if (envValue === undefined || envValue === null) {
+      console.warn(`Skipping undefined env variable: ${envKey}`);
       continue;
     }
+    env += `      ${envKey}: "${envValue}"\n`;
+  }
 
+  vars.push(env);
+
+  if (data.docker_networks?.length) {
+    data.docker_networks.forEach((net) => {
+      docker_networks += `      - name: ${net}\n`;
+    });
+    vars.push(docker_networks);
+  }
+
+  if (data.docker_volumes?.length) {
+    data.docker_volumes.forEach((vol) => {
+      docker_volumes += `      - ${vol}\n`;
+    });
+    vars.push(docker_volumes);
+  }
+
+  for (const [key, value] of Object.entries(payload)) {
     vars.push(`${key}: ${value}`);
   }
 
@@ -104,7 +121,7 @@ function processAnsibleLine(line) {
   const taskRegex = /^TASK \[(.+?)\]/;
   const statusRegex = /^(ok|changed|skipping): \[.+?\]/;
   const errorJsonRegex = /(?:FAILED|UNREACHABLE)! => (.+)$/;
-  
+
   if (
     line.startsWith("PLAY [") ||
     line.startsWith("TASK [Gathering Facts]") ||

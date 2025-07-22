@@ -7,13 +7,3 @@
       dockerfile: "{{ dockerfile_path | default('Dockerfile') }}"
     source: build
     state: present
-
-- name: Deploy Docker container
-  docker_container:
-    name: "{{ app_name }}"
-    image: "{{ docker_image_name | default(app_name) }}:{{ docker_image_tag | default('latest') }}"
-    state: started
-    restart_policy: always
-    ports:
-      - "{{ app_port }}:{{ docker_container_port | default(app_port) }}"
-    env: "{{ env }}"

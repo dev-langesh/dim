@@ -7,6 +7,12 @@
   include_tasks: install.yml
   when: docker_check.failed or docker_check.rc == 1
 
+- name: Start and enable Docker
+  service:
+    name: docker
+    state: started
+    enabled: yes
+
 - name: Pull Docker image and deploy container
   include_tasks: deploy_image.yml
   when: build_docker_image is not defined or build_docker_image == false

@@ -1,8 +1,7 @@
 - name: Check OS version
   fail:
-    msg: "Unsupported OS version. Minimum supported version is RHEL 8 and 9."
-  when: (ansible_facts['distribution_version'] is version('8', '<') or
-         ansible_facts['distribution_version'] is version('10', '>='))
+    msg: "Unsupported OS version. Supported versions are RedHat 8 and 9."
+  when: ansible_facts['distribution_major_version'] not in ['8', '9']
 
 - name: Remove conflicting packages
   shell: |

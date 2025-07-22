@@ -4,8 +4,8 @@
 
 - name: Check supported OS
   fail:
-    msg: "Unsupported OS. Supported distributions are Ubuntu, Debian, CentOS, and RedHat."
-  when: ansible_facts['distribution'] not in ['Ubuntu', 'Debian', 'CentOS', "RedHat"]
+    msg: "Unsupported OS. Supported distributions are Ubuntu, Debian, CentOS, Fedora, and RedHat."
+  when: ansible_facts['distribution'] not in ['Ubuntu', 'Debian', 'CentOS', "RedHat", "Fedora"]
 
 # - name: Get total system memory in MB
 #   ansible.builtin.shell: "cat /proc/meminfo | awk '/MemAvailable/ {print int($2 / 1024)}'"
@@ -43,8 +43,10 @@
   include_tasks: install_redhat.yml
   when: ansible_facts['distribution'] == 'RedHat'
 
-- name: Start and enable Docker
-  service:
-    name: docker
-    state: started
-    enabled: yes
+- name: Install Docker (CentOS)
+  include_tasks: install_centos.yml
+  when: ansible_facts['distribution'] == 'CentOS'
+
+- name: Install Docker (Fedora)
+  include_tasks: install_fedora.yml
+  when: ansible_facts['distribution'] == 'Fedora'

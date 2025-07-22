@@ -58,6 +58,7 @@ async function generatePlaybookContent(data, playBookPath) {
   }
 
   const roles = [
+    "prepare",
     data.git_repo && "git_clone",
     data.source_code && "source_code",
     data.platform,

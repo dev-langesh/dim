@@ -1,7 +1,7 @@
 - name: Check OS version
   fail:
     msg: "Unsupported OS version. Minimum supported version is Debian 11."
-  when: ansible_facts['distribution_version'] is version('11', '<')
+  when: ansible_facts['distribution_major_version'] is version('11', '<')
 
 - name: Remove conflicting packages
   apt:

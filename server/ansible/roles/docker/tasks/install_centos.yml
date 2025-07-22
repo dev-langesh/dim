@@ -1,0 +1,24 @@
+- name: Check OS version
+  fail:
+    msg: "Unsupported OS version. Supported versions are CentOS 8 and 9."
+  when: ansible_facts['distribution_major_version'] not in ['8', '9']
+
+- name: Remove conflicting packages
+  shell: |
+    dnf remove docker \
+                  docker-client \
+                  docker-client-latest \
+                  docker-common \
+                  docker-latest \
+                  docker-latest-logrotate \
+                  docker-logrotate \
+                  docker-engine
+
+- name: Setup Official Docker repository
+  shell: |
+    dnf -y install dnf-plugins-core
+    dnf config-manager --add-repo https://download.docker.com/linux/centos/docker-ce.repo
+
+- name: Install Docker
+  shell: |
+    dnf install docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin -y

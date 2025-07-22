@@ -1,0 +1,10 @@
+- name: Update system (Debian)
+  shell: |
+    apt-get update -y
+  when: ansible_facts['os_family'] == "Debian"
+
+- name: Update system (RedHat)
+  shell: |
+    dnf update -y
+  when: ansible_facts['distribution'] == "RedHat"
+

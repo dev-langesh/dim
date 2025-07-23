@@ -32,6 +32,7 @@ async function generatePlaybookContent(data, playBookPath) {
     "env",
     "docker_volumes",
     "docker_networks",
+    "start_script",
   ];
   const app_dir = data.app_dir || path.join("var", "www", data.app_name);
   let env = `env:\n`;
@@ -68,6 +69,12 @@ async function generatePlaybookContent(data, playBookPath) {
       docker_volumes += `      - ${vol}\n`;
     });
     vars.push(docker_volumes);
+  }
+
+  if (data.start_script) {
+    vars.push(
+      `start_script: ${data.start_script.replace(/npm run/g, "").trim()}`
+    );
   }
 
   for (const [key, value] of Object.entries(payload)) {

@@ -7,7 +7,6 @@
     dest: "{{ source_dir }}/.env"
   when: env_file is defined
 
-
 - name: Build the app
   block:
     - name: Build the app
@@ -48,7 +47,6 @@
     NODE_ENV: "{{ node_env | default('production') }}"
   ignore_errors: true
   register: start_result
-  become: false
 
 - name: Fail if PM2 start command fails
   fail:

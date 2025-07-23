@@ -1,14 +1,14 @@
-- name: Install Nginx (Debian)
+- name: Install Nginx
   apt:
     name: nginx
     state: present
     update_cache: yes
   when: ansible_facts['os_family'] == 'Debian'
 
-- name: Install Nginx (RedHat)
+- name: Install Nginx
   block:
     - name: Install nginx
-      yum:
+      dnf:
         name: nginx
         state: present
 
@@ -21,14 +21,8 @@
     - name: Configure Nginx
       shell: |
         setsebool -P httpd_can_network_connect 1
-  when: ansible_facts['distribution'] == 'RedHat'
-
-- name: Install Nginx (Archlinux)
-  pacman:
-    name: nginx
-    state: present
-    update_cache: yes
-  when: ansible_facts['os_family'] == 'Archlinux'
+      ignore_errors: true
+  when: ansible_facts['os_family'] == 'RedHat'
 
 - name: Start and Enable Nginx
   service:

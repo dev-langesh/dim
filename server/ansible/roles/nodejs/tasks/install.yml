@@ -15,7 +15,7 @@
     - nodejs_check.rc != 0
 
 - name: Install prerequisites (RedHat)
-  yum:
+  dnf:
     name: [curl, gnupg2, ca-certificates]
     state: present
   when:
@@ -43,7 +43,7 @@
 - name: Install Node.js (RHEL/CentOS/Alma)
   shell: |
     curl -fsSL https://rpm.nodesource.com/setup_{{ nodejs_version | default('lts') }}.x | bash -
-    yum install -y nodejs
+    dnf install -y nodejs
   when:
     - ansible_facts['os_family'] == 'RedHat'
     - nodejs_check.rc != 0

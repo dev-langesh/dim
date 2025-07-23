@@ -6,10 +6,22 @@
   when: ansible_facts['os_family'] == 'Debian'
 
 - name: Install Nginx (RedHat)
-  yum:
-    name: nginx
-    state: present
-  when: ansible_facts['os_family'] == 'RedHat'
+  block:
+    - name: Install nginx
+      yum:
+        name: nginx
+        state: present
+
+    - name: Configure Firewall
+      shell: |
+        firewall-cmd --permanent --add-port={80/tcp,443/tcp}
+        firewall-cmd --reload
+      ignore_errors: true
+      
+    - name: Configure Nginx
+      shell: |
+        setsebool -P httpd_can_network_connect 1
+  when: ansible_facts['distribution'] == 'RedHat'
 
 - name: Install Nginx (Archlinux)
   pacman:
@@ -17,3 +29,9 @@
     state: present
     update_cache: yes
   when: ansible_facts['os_family'] == 'Archlinux'
+
+- name: Start and Enable Nginx
+  service:
+    name: nginx
+    state: started
+    enabled: yes

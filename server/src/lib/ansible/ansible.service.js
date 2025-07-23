@@ -125,6 +125,7 @@ function processAnsibleLine(line) {
   if (
     line.startsWith("PLAY [") ||
     line.startsWith("TASK [Gathering Facts]") ||
+    line.endsWith("ignoring") ||
     line === ""
   ) {
     return null;

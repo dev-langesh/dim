@@ -9,6 +9,9 @@ server {
     proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
     proxy_set_header X-Forwarded-Proto $scheme;
   }
+
+  access_log /var/log/nginx/{{ domain_name }}/access.log;
+  error_log /var/log/nginx/{{ domain_name }}/error.log;
 }
 
 {% if enable_ssl %}
@@ -26,6 +29,9 @@ server {
     proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
     proxy_set_header X-Forwarded-Proto $scheme;
   }
+
+  access_log /var/log/nginx/{{ domain_name }}/access.log;
+  error_log /var/log/nginx/{{ domain_name }}/error.log;
 }
 
 server {

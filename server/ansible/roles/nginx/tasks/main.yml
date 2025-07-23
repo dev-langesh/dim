@@ -1,20 +1,14 @@
 - name: Install Nginx
   include_tasks: install.yml
 
+- name: Create Nginx Access Log Directory
+  file:
+    path: /var/log/nginx/{{ domain_name }}
+    state: directory
+    mode: "0755"
+
 - name: Configure Nginx
   template:
     src: nginx.conf.j2
-    dest: /etc/nginx/sites-available/{{ domain_name }}
+    dest: /etc/nginx/conf.d/{{ domain_name }}.conf
   notify: Reload Nginx
-
-- name: Enable Nginx site
-  file:
-    src: /etc/nginx/sites-available/{{ domain_name }}
-    dest: /etc/nginx/sites-enabled/{{ domain_name }}
-    state: link
-    force: yes
-
-- name: Remove default site
-  file:
-    path: /etc/nginx/sites-enabled/default
-    state: absent

@@ -90,6 +90,12 @@ async function generatePlaybookContent(data, playBookPath) {
     data.ssl && "ssl",
   ].filter(Boolean);
 
+  const processedRoles = [];
+
+  roles.forEach((role) => {
+    processedRoles.push(role, "end");
+  });
+
   const playbook = `
 - name: Deploy ${data.app_name}
   hosts: all
@@ -99,7 +105,7 @@ async function generatePlaybookContent(data, playBookPath) {
 ${vars.map((v) => `    ${v}`).join("\n")}
 
   roles:
-${roles.map((r) => `    - ${r}`).join("\n")}
+${processedRoles.map((r) => `    - ${r}`).join("\n")}
 `.trim();
 
   await fs.writeFile(playBookPath, playbook);

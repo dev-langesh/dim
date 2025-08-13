@@ -1,12 +1,6 @@
 - name: Install Nodejs and PM2
   include_tasks: install.yml
 
-- name: Copy .env file
-  copy:
-    src: "{{ env_file }}"
-    dest: "{{ source_dir }}/.env"
-  when: env_file is defined
-
 - name: Build the app
   block:
     - name: Build the app

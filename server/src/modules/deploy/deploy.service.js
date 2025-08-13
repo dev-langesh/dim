@@ -95,7 +95,12 @@ async function deployApplication(data) {
 
   // Generate playbook content[
   await ansibleService.generatePlaybookContent(
-    { ...data.appDetails, uploads_path: uploadsPath },
+    {
+      ...data.appDetails,
+      uploads_path: uploadsPath,
+      user: data.ssh.user,
+      host: data.ssh.host,
+    },
     playbookPath
   );
 

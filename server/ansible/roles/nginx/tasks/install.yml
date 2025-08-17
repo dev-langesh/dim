@@ -25,7 +25,6 @@
   when: ansible_facts['os_family'] == 'RedHat'
 
 - name: Start and Enable Nginx
-  service:
-    name: nginx
-    state: started
-    enabled: yes
+  shell: |
+    systemctl start {{ app_name }} > /dev/null 2>&1 && echo "Service started"
+    systemctl enable {{ app_name }} > /dev/null 2>&1 && echo "Service enabled"

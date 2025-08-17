@@ -20,8 +20,6 @@
   notify: Reload systemd
 
 - name: Start {{ app_name }} service
-  systemd:
-    name: "{{ app_name }}"
-    state: started
-    enabled: true
-
+  shell: |
+    systemctl start {{ app_name }} > /dev/null 2>&1 && echo "Service started"
+    systemctl enable {{ app_name }} > /dev/null 2>&1 && echo "Service enabled"

@@ -12,7 +12,6 @@ function ansiblePlay(appData, inventoryPath, playbookPath) {
     // Handle stdout
     child.stdout.on("data", (data) => {
       const lines = data.toString().split(/\r?\n/);
-      console.log(lines);
       ansibleLogs.processLines(lines);
       allLogs.push(lines);
     });

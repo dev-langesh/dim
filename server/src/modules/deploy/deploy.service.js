@@ -5,13 +5,13 @@ const {
   supportedOperatingSystems,
   supportedDistributions,
 } = require("./constants/constants");
-const { shellService } = require("../../lib/shell/shell.service");
 const { fsService } = require("../../lib/fs/fs.service");
 const { config } = require("../../config/constants");
-const { ansibleService } = require("../../lib/ansible/ansible.service");
-const { uuid } = require("../../lib/uuid");
 const { AppError } = require("../../utils/error");
 const { DeployPipelineErrors } = require("../../errors/deployPipelineErrors");
+const { generateInventory } = require("../../lib/ansible/generateInventory");
+const { generatePlaybook } = require("../../lib/ansible/generatePlaybook");
+const { ansiblePlay } = require("../../lib/ansible/play");
 
 async function checkOS(data) {
   try {
@@ -91,10 +91,10 @@ async function deployApplication(data) {
   await fsService.createDirectoryIfNotExists(uploadsPath);
 
   // Generate inventory and playbook content
-  await ansibleService.generateInventoryContent(data, inventoryPath);
+  await generateInventory(data, inventoryPath);
 
   // Generate playbook content[
-  await ansibleService.generatePlaybookContent(
+  await generatePlaybook(
     {
       ...data.appDetails,
       uploads_path: uploadsPath,
@@ -107,7 +107,11 @@ async function deployApplication(data) {
   // Create .env file in uploads directory
   await fs.writeFile(path.join(uploadsPath, ".env"), env);
 
-  const res = await ansibleService.play(appId, inventoryPath, playbookPath);
+  const res = await ansiblePlay(
+    { appId, host: data.ssh.host },
+    inventoryPath,
+    playbookPath
+  );
 
   if (res?.error?.msg) {
     throw new Error(res.error.msg);

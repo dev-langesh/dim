@@ -3,7 +3,6 @@ const { ProcessAnsibleLogs } = require("./processAnsibleLogs");
 
 function ansiblePlay(appData, inventoryPath, playbookPath) {
   const command = `export ANSIBLE_HOST_KEY_CHECKING=False && ansible-playbook -i ${inventoryPath} ${playbookPath} -vvv`;
-  const allLogs = [];
 
   return new Promise((resolve, reject) => {
     const child = spawn(command, { shell: true });
@@ -13,7 +12,6 @@ function ansiblePlay(appData, inventoryPath, playbookPath) {
     child.stdout.on("data", (data) => {
       const lines = data.toString().split(/\r?\n/);
       ansibleLogs.processLines(lines);
-      allLogs.push(lines);
     });
 
     // Handle stderr (error JSON or other stderr lines)
@@ -24,11 +22,11 @@ function ansiblePlay(appData, inventoryPath, playbookPath) {
         reject(new Error("Deploy pipeline execution failed : " + chunk));
     });
 
-    child.on("close", (code) => {
-      if (code !== 0) {
-        resolve({ error: ansibleLogs.logs[ansibleLogs.logs.length - 1] });
+    child.on("close", () => {
+      if (ansibleLogs.error) {
+        reject({ message: ansibleLogs.error.msg || ansibleLogs.error });
       }
-      resolve({ logs: ansibleLogs.logs, allLogs });
+      resolve({ logs: ansibleLogs.logs });
     });
 
     child.on("error", (err) => {

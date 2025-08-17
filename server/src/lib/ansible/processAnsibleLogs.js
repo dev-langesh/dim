@@ -5,6 +5,7 @@ class ProcessAnsibleLogs {
   #appData;
   #prevTask;
   logs = [];
+  error;
 
   constructor(appData) {
     this.#io = getIO();
@@ -18,7 +19,11 @@ class ProcessAnsibleLogs {
     let deleteCount = 0;
 
     for (const line of lines) {
-      if (line.startsWith(`<${this.#appData.host}>`) || line.startsWith("Escalation succeeded")) deleteCount++;
+      if (
+        line.startsWith(`<${this.#appData.host}>`) ||
+        line.startsWith("Escalation succeeded")
+      )
+        deleteCount++;
       else break;
     }
 
@@ -27,15 +32,42 @@ class ProcessAnsibleLogs {
     return processedLines;
   }
 
+  async #extractErrorFromLog(log) {
+    // Capture the first JSON object after "FAILED! =>" or "UNREACHABLE! =>"
+    const errorMatch = /(?:FAILED|UNREACHABLE)!\s*=>\s*(\{[\s\S]*?\})/.exec(
+      log
+    );
+    if (!errorMatch) return;
+
+    const raw = errorMatch[1];
+
+    // Try to parse. If the block is escaped (\" and \n), unescape and retry.
+    try {
+      this.error = JSON.parse(raw);
+    } catch {
+      const unescaped = raw.replace(/\\n/g, "\n").replace(/\\"/g, '"');
+      try {
+        this.error = JSON.parse(unescaped)?.msg;
+      } catch {
+        this.error = unescaped; // fallback to the string if still not valid JSON
+      }
+    }
+  }
+
   #storeAndEmitLog(task, status, endTask) {
     const currentTask = this.#prevTask;
     this.#prevTask = task;
 
     if (!currentTask && !endTask) return;
 
-    this.#io.emit(`app-logs-${this.#appData.appId}`, `${currentTask || ""}\n${status}`);
+    this.#io.emit(
+      `app-logs-${this.#appData.appId}`,
+      `${currentTask || ""}\n${status}`
+    );
 
     this.logs.push(`${currentTask || ""}\n${status}`);
+
+    if (endTask) this.#extractErrorFromLog(status);
   }
 
   processLines(lines) {
@@ -62,7 +94,11 @@ class ProcessAnsibleLogs {
       this.#storeAndEmitLog("", status, true);
     }
 
-    if (status.startsWith("skipping:") || status.startsWith("redirecting")) {
+    if (
+      status.startsWith("skipping:") ||
+      status.startsWith("redirecting") ||
+      status.startsWith("included:")
+    ) {
       this.#prevTask = task;
     } else {
       this.#storeAndEmitLog(task, status);

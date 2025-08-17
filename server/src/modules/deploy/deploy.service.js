@@ -113,10 +113,6 @@ async function deployApplication(data) {
     playbookPath
   );
 
-  if (res?.error?.msg) {
-    throw new Error(res.error.msg);
-  }
-
   return res;
 }
 

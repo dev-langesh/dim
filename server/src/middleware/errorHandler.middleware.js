@@ -1,7 +1,7 @@
 // middlewares/errorHandler.js
 
 function errorHandler(err, req, res, next) {
-  console.error(err.stack);
+  console.error(err.stack || err);
 
   const statusCode = err.statusCode || 500;
 

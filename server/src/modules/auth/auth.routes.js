@@ -6,12 +6,6 @@ const { authInputSchema } = require("./auth.inputSchema");
 const router = require("express").Router();
 
 router.get("/status", validateToken, authController.authStatus);
-router.get(
-  "/github/oauth/callback",
-  validateInput(authInputSchema.githubCallbackSchema),
-  authController.githubOauthCallback
-);
-router.get("/github/install-app/callback", authController.githubInstallAppCallback);
 
 router.post(
   "/register",

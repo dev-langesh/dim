@@ -16,9 +16,9 @@ export default function OAuthCallback() {
     router.push("/project/new");
   }
 
-  // useEffect(() => {
-  //   handleOAuthCallback();
-  // }, []);
+  useEffect(() => {
+    handleOAuthCallback();
+  }, []);
 
   return <FullPageLoading />;
 }

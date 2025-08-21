@@ -3,17 +3,26 @@
 import { useEffect, useState } from "react";
 import ConnectRemoteRepository from "./ConnectRemoteRepository";
 import { repoApi } from "@/api/repoApi";
+import { toast } from "react-toastify";
 
 export default function SourceCode() {
   const [repos, setRepos] = useState([]);
   const [repoConnected, setRepoConnected] = useState(true);
   const [loading, setLoading] = useState(true);
+  const [loadingRepos, setLoadingRepos] = useState(true);
 
-  async function getRepos() {
+  async function getRepoConnection() {
     try {
       setLoading(true);
-      const response = await repoApi.getGitRepos("bitbucket","q=d");
-      setRepos(response.data);
+      const res = await repoApi.getRepoConnectionStatus();
+      setRepoConnected(res.data.connected);
+      const host = res.data.repo.github
+        ? "github"
+        : res.data.repo.bitbucket
+        ? "bitbucket"
+        : "gitlab";
+      setLoading(false);
+      await getRepos(host);
     } catch (error) {
       setRepoConnected(false);
     } finally {
@@ -21,8 +30,21 @@ export default function SourceCode() {
     }
   }
 
+  async function getRepos(host, query = "") {
+    try {
+      const response = await repoApi.getGitRepos(`q=${query}`);
+      setRepos(response.data);
+    } catch (error) {
+      toast.error(
+        error.response?.data?.message || "Failed to fetch repositories"
+      );
+    } finally {
+      setLoadingRepos(false);
+    }
+  }
+
   useEffect(() => {
-    getRepos();
+    getRepoConnection();
   }, []);
 
   if (loading) {
@@ -30,7 +52,7 @@ export default function SourceCode() {
   }
 
   if (!repoConnected) {
-    return <ConnectRemoteRepository />;
+    return <ConnectRemoteRepository className="mt-14" />;
   }
 
   return (

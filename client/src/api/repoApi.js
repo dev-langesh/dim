@@ -7,5 +7,6 @@ export const repoApi = {
     protectedApi.get("/repos/github/install-app/callback/?" + q),
   bitbucketOauthCallback: (q) =>
     protectedApi.get("/repos/bitbucket/oauth/callback/?" + q),
-  getGitRepos: (param, q) => protectedApi.get(`/repos/${param}/?${q}`),
+  getGitRepos: (q) => protectedApi.get(`/repos/git/?${q}`),
+  getRepoConnectionStatus: () => protectedApi.get(`/repos/connection-status`),
 };

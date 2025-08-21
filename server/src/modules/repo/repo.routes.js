@@ -7,7 +7,7 @@ const router = require("express").Router();
 
 router.get("/", validateToken, repoController.getRepo);
 router.get("/connection-status", validateToken, repoController.getConnectionStatus);
-router.get("/:host", validateToken, repoController.getGitRepos);
+router.get("/git", validateToken, repoController.getGitRepos);
 
 router.get(
   "/github/oauth/callback",

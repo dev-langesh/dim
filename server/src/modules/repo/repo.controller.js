@@ -23,7 +23,7 @@ async function bitbucketOauthCallback(req, res) {
 }
 
 async function getGitRepos(req, res) {
-  const sRes = await repoService.getGitRepos(req.user._id, req.query.q, req.params.host);
+  const sRes = await repoService.getGitRepos(req.user._id, req.query.q);
   return res.json(sRes);
 }
 

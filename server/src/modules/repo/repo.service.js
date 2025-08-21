@@ -10,17 +10,23 @@ const { ConnectRepoErrors } = require("../../errors/connectRepoErrors");
 
 async function createRepo(remoteRepo, data) {
   let repo = await Repo.findOne({ user: data.userId });
-  const payload = {
-    ...repo[remoteRepo],
-    ...data,
-  };
   if (!repo) {
     repo = await Repo.create({
       user: data.userId,
-      [remoteRepo]: payload,
+      [remoteRepo]: data,
     });
   } else {
-    repo[remoteRepo] = payload;
+    const hosts = ["github", "bitbucket"];
+    repo[remoteRepo] = {
+      ...repo[remoteRepo],
+      ...data,
+    };
+
+    hosts.forEach((host) => {
+      if (host !== remoteRepo) {
+        repo[host] = null;
+      }
+    });
     await repo.save();
   }
   return repo;
@@ -229,26 +235,17 @@ async function getBitbucketRepos({
   }
 }
 
-async function getGitRepos(userId, query, host) {
+async function getGitRepos(userId, query) {
   const repo = await getRepo(userId);
-
-  if (
-    host === "bitbucket" &&
-    repo.bitbucket?.accessToken &&
-    repo.bitbucket?.username
-  ) {
+  if (repo.github?.installationId && repo.github?.username) {
+    return await getGithubRepos({ ...repo.github, query });
+  } else if (repo.bitbucket?.accessToken && repo.bitbucket?.username) {
     return await getBitbucketRepos({
       accessToken: repo.bitbucket?.accessToken,
       refreshToken: repo.bitbucket?.refreshToken,
       query,
       repoId: repo._id,
     });
-  } else if (
-    host === "github" &&
-    repo.github?.installationId &&
-    repo.github?.username
-  ) {
-    return await getGithubRepos({ ...repo.github, query });
   } else {
     throw new AppError(ConnectRepoErrors.REPO_NOT_CONNECTED);
   }

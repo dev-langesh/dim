@@ -26,10 +26,10 @@ export default function ConnectRemoteRepository({ className }) {
       ></RepoCard>
       <RepoCard
         Icon={FaGitlab}
-        repoName="Gitlab"
-        OAuthUri={`https://bitbucket.org/site/oauth2/authorize?client_id=${process.env.NEXT_PUBLIC_BITBUCKET_CLIENT_ID}&response_type=code&redirect_uri=${process.env.NEXT_PUBLIC_BITBUCKET_OAUTH_CALLBACK}`}
+        repoName="GitLab"
+        OAuthUri={`https://gitlab.com/oauth/authorize?client_id=${process.env.NEXT_PUBLIC_GITLAB_CLIENT_ID}&redirect_uri=${process.env.NEXT_PUBLIC_GITLAB_OAUTH_CALLBACK}&response_type=code&scope=read_user+read_api`}
         className="bg-orange-600 hover:bg-orange-700"
-      ></RepoCard>
+      />
     </div>
   );
 }

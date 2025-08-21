@@ -22,6 +22,12 @@ async function bitbucketOauthCallback(req, res) {
   return res.json({});
 }
 
+async function gitlabOauthCallback(req, res) {
+  await repoService.gitlabOauthCallback(req.query.code, req.user._id);
+
+  return res.json({});
+}
+
 async function getGitRepos(req, res) {
   const sRes = await repoService.getGitRepos(req.user._id, req.query.q);
   return res.json(sRes);
@@ -41,6 +47,7 @@ const repoController = {
   githubOauthCallback: asyncHandler(githubOauthCallback),
   githubInstallAppCallback: asyncHandler(githubInstallAppCallback),
   bitbucketOauthCallback: asyncHandler(bitbucketOauthCallback),
+  gitlabOauthCallback: asyncHandler(gitlabOauthCallback),
   getGitRepos: asyncHandler(getGitRepos),
   getRepo: asyncHandler(getRepo),
   getConnectionStatus: asyncHandler(getConnectionStatus),

@@ -28,6 +28,11 @@ const repoSchema = new mongoose.Schema({
       type: String,
     },
   },
+  gitlab: {
+    accessToken: String,
+    refreshToken: String,
+    username: String,
+  },
 });
 
 const Repo = mongoose.model("Repo", repoSchema);

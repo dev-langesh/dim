@@ -30,7 +30,7 @@ export default function SourceCode() {
     }
   }
 
-  async function getRepos(host, query = "") {
+  async function getRepos(query = "") {
     try {
       const response = await repoApi.getGitRepos(`q=${query}`);
       setRepos(response.data);

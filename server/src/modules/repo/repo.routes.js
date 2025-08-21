@@ -6,7 +6,11 @@ const { repoInputSchema } = require("./repo.inputSchema");
 const router = require("express").Router();
 
 router.get("/", validateToken, repoController.getRepo);
-router.get("/connection-status", validateToken, repoController.getConnectionStatus);
+router.get(
+  "/connection-status",
+  validateToken,
+  repoController.getConnectionStatus
+);
 router.get("/git", validateToken, repoController.getGitRepos);
 
 router.get(
@@ -17,15 +21,21 @@ router.get(
 );
 
 router.get(
+  "/github/install-app/callback",
+  validateToken,
+  repoController.githubInstallAppCallback
+);
+
+router.get(
   "/bitbucket/oauth/callback",
   validateToken,
   repoController.bitbucketOauthCallback
 );
 
 router.get(
-  "/github/install-app/callback",
+  "/gitlab/oauth/callback",
   validateToken,
-  repoController.githubInstallAppCallback
+  repoController.gitlabOauthCallback
 );
 
 module.exports = { repoRouter: router };

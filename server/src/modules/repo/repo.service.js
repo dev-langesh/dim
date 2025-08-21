@@ -16,7 +16,7 @@ async function createRepo(remoteRepo, data) {
       [remoteRepo]: data,
     });
   } else {
-    const hosts = ["github", "bitbucket"];
+    const hosts = ["github", "bitbucket", "gitlab"];
     repo[remoteRepo] = {
       ...repo[remoteRepo],
       ...data,
@@ -153,6 +153,43 @@ async function bitbucketOauthCallback(code, userId) {
   return;
 }
 
+async function gitlabOauthCallback(code, userId) {
+  try {
+    // 1. Exchange code for access token
+    const tokenRes = await axios.post("https://gitlab.com/oauth/token", {
+      client_id: env.GITLAB_CLIENT_ID,
+      client_secret: env.GITLAB_CLIENT_SECRET,
+      code,
+      grant_type: "authorization_code",
+      redirect_uri: env.GITLAB_CALLBACK_URL,
+    });
+
+    const accessToken = tokenRes.data.access_token;
+    const refreshToken = tokenRes.data.refresh_token;
+
+    // 2. Fetch user profile
+    const userRes = await axios.get("https://gitlab.com/api/v4/user", {
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+      },
+    });
+
+    const { username } = userRes.data;
+
+    // 3. Save/update in Repo collection
+    await createRepo("gitlab", {
+      userId,
+      accessToken,
+      refreshToken,
+      username,
+    });
+
+    return;
+  } catch (e) {
+    console.error("GitLab OAuth error:", e.response?.data || e.message);
+  }
+}
+
 async function getGithubRepos(data) {
   const octokit = await getOctokitInstance(data.installationId);
 
@@ -235,6 +272,61 @@ async function getBitbucketRepos({
   }
 }
 
+async function refreshGitlabToken(refreshToken) {
+  try {
+    const tokenRes = await axios.post("https://gitlab.com/oauth/token", {
+      client_id: env.GITLAB_CLIENT_ID,
+      client_secret: env.GITLAB_CLIENT_SECRET,
+      grant_type: "refresh_token",
+      refresh_token: refreshToken,
+    });
+
+    return {
+      accessToken: tokenRes.data.access_token,
+      refreshToken: tokenRes.data.refresh_token,
+    };
+  } catch (error) {
+    console.error(
+      "Error refreshing GitLab token:",
+      error.response?.data || error
+    );
+    throw new AppError(ConnectRepoErrors.FAILED_TO_REFRESH_TOKEN);
+  }
+}
+
+async function getGitlabRepos({ accessToken, refreshToken, repoId, query }) {
+  let url = `https://gitlab.com/api/v4/projects?membership=true&order_by=last_activity_at&sort=desc`;
+
+  if (query) {
+    url += `&search=${encodeURIComponent(query)}`;
+  }
+
+  try {
+    const res = await axios.get(url, {
+      headers: { Authorization: `Bearer ${accessToken}` },
+    });
+
+    return res.data.map((repo) => repo.path_with_namespace);
+  } catch (error) {
+    try {
+      const tokens = await refreshGitlabToken(refreshToken);
+
+      await updateRepoById(repoId, "gitlab", {
+        accessToken: tokens.accessToken,
+        refreshToken: tokens.refreshToken,
+      });
+
+      const res = await axios.get(url, {
+        headers: { Authorization: `Bearer ${tokens.accessToken}` },
+      });
+
+      return res.data.map((repo) => repo.path_with_namespace);
+    } catch (e) {
+      throw new AppError(ConnectRepoErrors.REFRESH_TOKEN_EXPIRED);
+    }
+  }
+}
+
 async function getGitRepos(userId, query) {
   const repo = await getRepo(userId);
   if (repo.github?.installationId && repo.github?.username) {
@@ -243,6 +335,13 @@ async function getGitRepos(userId, query) {
     return await getBitbucketRepos({
       accessToken: repo.bitbucket?.accessToken,
       refreshToken: repo.bitbucket?.refreshToken,
+      query,
+      repoId: repo._id,
+    });
+  } else if (repo.gitlab?.accessToken && repo.gitlab?.username) {
+    return await getGitlabRepos({
+      accessToken: repo.gitlab?.accessToken,
+      refreshToken: repo.gitlab?.refreshToken,
       query,
       repoId: repo._id,
     });
@@ -257,7 +356,8 @@ async function getConnectionStatus(userId) {
   if (
     !repo.github?.installationId &&
     !repo.github?.username &&
-    !repo.bitbucket?.accessToken
+    !repo.bitbucket?.accessToken &&
+    !repo.gitlab?.accessToken
   ) {
     throw new AppError(ConnectRepoErrors.REPO_NOT_CONNECTED);
   }
@@ -271,6 +371,7 @@ const repoService = {
   getGitRepos,
   getRepo,
   getConnectionStatus,
+  gitlabOauthCallback,
 };
 
 module.exports = { repoService };

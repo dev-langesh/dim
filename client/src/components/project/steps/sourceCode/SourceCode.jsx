@@ -16,13 +16,8 @@ export default function SourceCode() {
       setLoading(true);
       const res = await repoApi.getRepoConnectionStatus();
       setRepoConnected(res.data.connected);
-      const host = res.data.repo.github
-        ? "github"
-        : res.data.repo.bitbucket
-        ? "bitbucket"
-        : "gitlab";
       setLoading(false);
-      await getRepos(host);
+      await getRepos();
     } catch (error) {
       setRepoConnected(false);
     } finally {
@@ -53,7 +48,7 @@ export default function SourceCode() {
     return <div>Loading...</div>;
   }
 
-  if (repoConnected) {
+  if (!repoConnected) {
     return <ConnectRemoteRepository className="mt-14" />;
   }
 

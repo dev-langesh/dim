@@ -12,7 +12,7 @@ export default function SourceCode() {
   async function getRepos() {
     try {
       setLoading(true);
-      const response = await repoApi.getGitRepos();
+      const response = await repoApi.getGitRepos("bitbucket","q=d");
       setRepos(response.data);
     } catch (error) {
       setRepoConnected(false);

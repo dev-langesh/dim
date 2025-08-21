@@ -87,8 +87,9 @@ async function responseErrorInterceptor(error, client = api, protectedApi) {
       isRefreshing = false;
       refreshPromise = null;
     }
-  } else if (status === 401 && protectedApi && errorCode !== 2001)
-    await logout(protectedApi);
+  }
+  // else if (status === 401 && protectedApi && errorCode !== 2001)
+  //   await logout(protectedApi);
 
   return Promise.reject(error);
 }

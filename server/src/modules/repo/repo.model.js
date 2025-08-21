@@ -15,7 +15,18 @@ const repoSchema = new mongoose.Schema({
     },
     username: {
       type: String,
-    }
+    },
+  },
+  bitbucket: {
+    accessToken: {
+      type: String,
+    },
+    refreshToken: {
+      type: String,
+    },
+    username: {
+      type: String,
+    },
   },
 });
 

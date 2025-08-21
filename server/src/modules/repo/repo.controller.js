@@ -16,8 +16,14 @@ async function githubInstallAppCallback(req, res) {
   return res.json(sRes);
 }
 
+async function bitbucketOauthCallback(req, res) {
+  await repoService.bitbucketOauthCallback(req.query.code, req.user._id);
+
+  return res.json({});
+}
+
 async function getGitRepos(req, res) {
-  const sRes = await repoService.getGitRepos(req.user._id);
+  const sRes = await repoService.getGitRepos(req.user._id, req.query.q, req.params.host);
   return res.json(sRes);
 }
 
@@ -26,11 +32,18 @@ async function getRepo(req, res) {
   return res.json(sRes);
 }
 
+async function getConnectionStatus(req, res) {
+  const sRes = await repoService.getConnectionStatus(req.user._id);
+  return res.json(sRes);
+}
+
 const repoController = {
   githubOauthCallback: asyncHandler(githubOauthCallback),
   githubInstallAppCallback: asyncHandler(githubInstallAppCallback),
+  bitbucketOauthCallback: asyncHandler(bitbucketOauthCallback),
   getGitRepos: asyncHandler(getGitRepos),
   getRepo: asyncHandler(getRepo),
+  getConnectionStatus: asyncHandler(getConnectionStatus),
 };
 
 module.exports = { repoController };

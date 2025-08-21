@@ -22,6 +22,9 @@ const envSchema = z.object({
   GITHUB_APP_ID: z.string(),
   GITHUB_APP_CLIENT_ID: z.string(),
   GITHUB_APP_CLIENT_SECRET: z.string(),
+  BITBUCKET_CLIENT_ID: z.string(),
+  BITBUCKET_CLIENT_SECRET: z.string(),
+  BITBUCKET_CALLBACK_URL: z.string().url(),
 });
 
 const env = envSchema.safeParse(process.env);

@@ -35,6 +35,8 @@ export default function SourceCode() {
       const response = await repoApi.getGitRepos(`q=${query}`);
       setRepos(response.data);
     } catch (error) {
+      setRepoConnected(false);
+      if (error.response?.data.errorCode === 4001) return;
       toast.error(
         error.response?.data?.message || "Failed to fetch repositories"
       );
@@ -51,7 +53,7 @@ export default function SourceCode() {
     return <div>Loading...</div>;
   }
 
-  if (!repoConnected) {
+  if (repoConnected) {
     return <ConnectRemoteRepository className="mt-14" />;
   }
 

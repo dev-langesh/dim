@@ -1,16 +1,25 @@
 "use client";
 
 import { repoApi } from "@/api/repoApi";
-import { FullPageLoading } from "@/components/ui/CircularProgress";
+import { CircularProgress } from "@/components/ui/CircularProgress";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 
-export default function OAuthCallback() {
+export default function GitlabOAuthCallback() {
+  const [error, setError] = useState(false);
+  const [loading, setLoading] = useState(true);
+
   const searchParams = useSearchParams();
   const router = useRouter();
 
   async function handleOAuthCallback() {
-    await repoApi.gitlabOauthCallback(searchParams.toString());
+    try {
+      await repoApi.gitlabOauthCallback(searchParams.toString());
+    } catch (e) {
+      setError(true);
+    } finally {
+      setLoading(false);
+    }
 
     router.push("/project/new");
   }
@@ -19,5 +28,19 @@ export default function OAuthCallback() {
     handleOAuthCallback();
   }, []);
 
-  return <FullPageLoading />;
+  return (
+    <div className="w-screen h-screen flex items-center justify-center flex-col">
+      <CircularProgress />
+      {error && (
+        <div className="mt-4 text-red-500 font-semibold">
+          Failed to authorize GitLab OAuth. Redirecting...
+        </div>
+      )}
+      {!error && !loading && (
+        <div className="mt-4 text-green-500 font-semibold">
+          Successfully authorized GitLab OAuth. Redirecting...
+        </div>
+      )}
+    </div>
+  );
 }

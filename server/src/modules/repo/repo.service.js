@@ -279,6 +279,7 @@ async function refreshGitlabToken(refreshToken) {
       client_secret: env.GITLAB_CLIENT_SECRET,
       grant_type: "refresh_token",
       refresh_token: refreshToken,
+      redirect_uri: env.GITLAB_CALLBACK_URL,
     });
 
     return {
@@ -286,11 +287,7 @@ async function refreshGitlabToken(refreshToken) {
       refreshToken: tokenRes.data.refresh_token,
     };
   } catch (error) {
-    console.error(
-      "Error refreshing GitLab token:",
-      error.response?.data || error
-    );
-    throw new AppError(ConnectRepoErrors.FAILED_TO_REFRESH_TOKEN);
+    throw new AppError(ConnectRepoErrors.REFRESH_TOKEN_EXPIRED);
   }
 }
 

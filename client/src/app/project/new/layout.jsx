@@ -3,7 +3,7 @@ import React from "react";
 
 export default function CreateProjectLayout({ children }) {
   return (
-    <div>
+    <div className="p-10">
       <ProjectStepper />
       {children}
     </div>

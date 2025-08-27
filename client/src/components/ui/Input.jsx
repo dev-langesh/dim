@@ -50,7 +50,7 @@ const Input = React.forwardRef(
             value={value}
             onChange={onChange}
             className={cn(
-              "placeholder:text-on-muted border border-border h-9 w-full min-w-0 rounded-[6px] px-3 py-2 md:text-base shadow-xs transition-[color] outline-none",
+              "placeholder:text-on-muted border border-border w-full min-w-0 rounded-[6px] px-3 py-2 md:text-base shadow-xs transition-[color] outline-none",
               "focus-visible:border-border-active focus-visible:ring-ring/50 focus-visible:ring-[3px] hover:border-border-active",
               "disabled:cursor-not-allowed disabled:opacity-50 disabled:bg-disabled disabled:border-none disabled:shadow-none text-sm",
               "read-only:opacity-50 read-only:focus-visible:ring-0 read-only:focus-visible:border-border read-only:hover:border-border",

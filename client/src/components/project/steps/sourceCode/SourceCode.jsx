@@ -3,40 +3,24 @@
 import { useEffect, useState } from "react";
 import ConnectRemoteRepository from "./ConnectRemoteRepository";
 import { repoApi } from "@/api/repoApi";
-import { toast } from "react-toastify";
+import SelectRepository from "./SelectRepository";
+import Card from "@/components/ui/Card";
+import ProjectInfoForm from "./ProjectInfoForm";
 
 export default function SourceCode() {
-  const [repos, setRepos] = useState([]);
-  const [repoConnected, setRepoConnected] = useState(true);
+  const [connectedRepo, setConnectedRepo] = useState(true);
   const [loading, setLoading] = useState(true);
-  const [loadingRepos, setLoadingRepos] = useState(true);
 
   async function getRepoConnection() {
     try {
       setLoading(true);
       const res = await repoApi.getRepoConnectionStatus();
-      setRepoConnected(res.data.connected);
+      setConnectedRepo(res.data.repo);
       setLoading(false);
-      await getRepos();
     } catch (error) {
-      setRepoConnected(false);
+      setConnectedRepo(false);
     } finally {
       setLoading(false);
-    }
-  }
-
-  async function getRepos(query = "") {
-    try {
-      const response = await repoApi.getGitRepos(`q=${query}`);
-      setRepos(response.data);
-    } catch (error) {
-      setRepoConnected(false);
-      if (error.response?.data.errorCode === 4001) return;
-      toast.error(
-        error.response?.data?.message || "Failed to fetch repositories"
-      );
-    } finally {
-      setLoadingRepos(false);
     }
   }
 
@@ -48,18 +32,26 @@ export default function SourceCode() {
     return <div>Loading...</div>;
   }
 
-  if (!repoConnected) {
+  if (!connectedRepo) {
     return <ConnectRemoteRepository className="mt-14" />;
   }
 
   return (
-    <div>
-      <h2>Connected Repositories</h2>
-      <ul>
-        {repos.map((repo) => (
-          <li key={repo.id}>{repo}</li>
-        ))}
-      </ul>
-    </div>
+    <Card className="flex items-start justify-center md:w-5/6 gap-4 mx-auto shadow-md">
+      <SelectRepository
+        setConnectedRepo={setConnectedRepo}
+        provider={
+          connectedRepo?.github
+            ? "github"
+            : connectedRepo?.gitlab
+            ? "gitlab"
+            : connectedRepo?.bitbucket
+            ? "bitbucket"
+            : ""
+        }
+      />
+      <div className="h-[350px] w-[1px] bg-zinc-400"></div>
+      <ProjectInfoForm />
+    </Card>
   );
 }

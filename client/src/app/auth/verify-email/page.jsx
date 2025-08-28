@@ -97,7 +97,7 @@ export default function OtpVerification() {
 
           <OtpInput digits={6} value={otp} onChange={setOtp} />
 
-          <Button disabled={loading} type="submit" className="md:!w-[350px]">
+          <Button disabled={loading} type="submit" className="w-full">
             {loading ? "Verifying..." : "Verify OTP"}
           </Button>
 
@@ -106,7 +106,7 @@ export default function OtpVerification() {
             onClick={() => sendOtp(true)}
             disabled={timer > 0 || isResending || loading || limitReached}
             variant="outline"
-            className="md:!w-[350px]"
+            className="w-full"
           >
             {isResending
               ? "Resending..."

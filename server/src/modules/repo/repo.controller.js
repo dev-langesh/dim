@@ -34,12 +34,21 @@ async function getGitRepos(req, res) {
 }
 
 async function getRepo(req, res) {
-  const sRes = await repoService.getRepo(req.user._id);
+  const sRes = await repoService.getRepoByUserId(req.user._id);
   return res.json(sRes);
 }
 
 async function getConnectionStatus(req, res) {
   const sRes = await repoService.getConnectionStatus(req.user._id);
+  return res.json(sRes);
+}
+
+async function getRepoBranches(req, res) {
+  const sRes = await repoService.getRepoBranches({
+    userId: req.user._id,
+    repository: req.query.repository,
+    provider: req.query.provider,
+  });
   return res.json(sRes);
 }
 
@@ -51,6 +60,7 @@ const repoController = {
   getGitRepos: asyncHandler(getGitRepos),
   getRepo: asyncHandler(getRepo),
   getConnectionStatus: asyncHandler(getConnectionStatus),
+  getRepoBranches: asyncHandler(getRepoBranches),
 };
 
 module.exports = { repoController };

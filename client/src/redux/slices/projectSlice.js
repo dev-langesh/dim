@@ -3,7 +3,12 @@ import { createSlice } from "@reduxjs/toolkit";
 const initialState = {
   value: {
     currentStep: 1,
-    selected_github_repo: null,
+    app_id: null,
+    app_name: null,
+    github_repo: null,
+    git_branch: "main",
+    source_dir: "./",
+    platform: null
   },
 };
 
@@ -32,16 +37,10 @@ const projectSlice = createSlice({
   },
 });
 
-export const {
-  nextStep,
-  prevStep,
-  resetStep,
-  setStep,
-  setState,
-  resetState,
-} = projectSlice.actions;
+export const { nextStep, prevStep, resetStep, setStep, setState, resetState } =
+  projectSlice.actions;
 
 export const getCurrentStep = (state) => state.project.value.currentStep;
-export const getSelectedGithubRepo = (state) => state.project.value.selected_github_repo;
+export const getGithubRepo = (state) => state.project.value.github_repo;
 
 export default projectSlice.reducer;

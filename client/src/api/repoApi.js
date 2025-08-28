@@ -11,4 +11,5 @@ export const repoApi = {
     protectedApi.get("/repos/gitlab/oauth/callback/?" + q),
   getGitRepos: (q) => protectedApi.get(`/repos/git/?${q}`),
   getRepoConnectionStatus: () => protectedApi.get(`/repos/connection-status`),
+  getRepoBranches: (q) => protectedApi.get(`/repos/git/branches/?${q}`),
 };

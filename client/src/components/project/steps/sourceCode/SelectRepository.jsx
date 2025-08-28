@@ -2,7 +2,7 @@
 
 import { repoApi } from "@/api/repoApi";
 import Input from "@/components/ui/Input";
-import {  getSelectedGithubRepo, setState } from "@/redux/slices/projectSlice";
+import {  getGithubRepo, setState } from "@/redux/slices/projectSlice";
 import React, { useEffect, useState, useRef } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { FaGithub, FaGitlab, FaBitbucket } from "react-icons/fa";
@@ -13,7 +13,7 @@ export default function SelectRepository({ setConnectedRepo, provider }) {
   const [repos, setRepos] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  const githubRepo = useSelector(getSelectedGithubRepo);
+  const githubRepo = useSelector(getGithubRepo);
   const dispatch = useDispatch();
 
   const Icon =
@@ -68,7 +68,7 @@ export default function SelectRepository({ setConnectedRepo, provider }) {
   }
 
   function handleSelect(repo) {
-    dispatch(setState({ selected_github_repo: repo }));
+    dispatch(setState({ github_repo: repo }));
   }
 
   return (

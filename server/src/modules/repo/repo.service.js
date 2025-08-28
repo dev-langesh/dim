@@ -44,7 +44,7 @@ async function updateRepoById(repoId, host, data) {
   return repo;
 }
 
-async function getRepo(userId) {
+async function getRepoByUserId(userId) {
   const repo = await Repo.findOne({ user: userId });
 
   if (!repo) throw new AppError(ConnectRepoErrors.REPO_NOT_CONNECTED);
@@ -325,7 +325,7 @@ async function getGitlabRepos({ accessToken, refreshToken, repoId, query }) {
 }
 
 async function getGitRepos(userId, query) {
-  const repo = await getRepo(userId);
+  const repo = await getRepoByUserId(userId);
   if (repo.github?.installationId && repo.github?.username) {
     return await getGithubRepos({ ...repo.github, query });
   } else if (repo.bitbucket?.accessToken && repo.bitbucket?.username) {
@@ -348,7 +348,7 @@ async function getGitRepos(userId, query) {
 }
 
 async function getConnectionStatus(userId) {
-  const repo = await getRepo(userId);
+  const repo = await getRepoByUserId(userId);
 
   if (
     !repo.github?.installationId &&
@@ -361,14 +361,72 @@ async function getConnectionStatus(userId) {
   return { connected: true, repo };
 }
 
+async function getGithubBranches({ installationId, repo }) {
+  const octokit = await getOctokitInstance(installationId);
+
+  const res = await octokit.request(`GET /repos/${repo}/branches`, {
+    owner,
+    repo: repoName,
+    per_page: 100,
+  });
+
+  return res.data.map((branch) => branch.name);
+}
+
+async function getGitlabBranches({ accessToken, repository }) {
+  const encodedRepo = encodeURIComponent(repository);
+
+  const url = `https://gitlab.com/api/v4/projects/${encodedRepo}/repository/branches`;
+
+  const res = await axios.get(url, {
+    headers: { Authorization: `Bearer ${accessToken}` },
+  });
+
+  return res.data.map((branch) => branch.name);
+}
+
+async function getBitbucketBranches({ accessToken, repo }) {
+  const url = `https://api.bitbucket.org/2.0/repositories/${repo}/refs/branches`;
+
+  const res = await axios.get(url, {
+    headers: { Authorization: `Bearer ${accessToken}` },
+  });
+
+  return res.data.values.map((branch) => branch.name);
+}
+
+async function getRepoBranches({ provider, userId, repository }) {
+  const repo = await getRepoByUserId(userId);
+  switch (provider.toLowerCase()) {
+    case "github":
+      return await getGithubBranches({
+        installationId: repo.github?.installationId,
+        repository,
+      });
+    case "gitlab":
+      return await getGitlabBranches({
+        accessToken: repo.gitlab?.accessToken,
+        repository,
+      });
+    case "bitbucket":
+      return await getBitbucketBranches({
+        accessToken: repo.bitbucket?.accessToken,
+        repository,
+      });
+    default:
+      throw new Error(`Unsupported provider: ${provider}`);
+  }
+}
+
 const repoService = {
   githubOauthCallback,
   bitbucketOauthCallback,
   githubInstallAppCallback,
   getGitRepos,
-  getRepo,
+  getRepoByUserId,
   getConnectionStatus,
   gitlabOauthCallback,
+  getRepoBranches,
 };
 
 module.exports = { repoService };

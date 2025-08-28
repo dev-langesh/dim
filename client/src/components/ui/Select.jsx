@@ -5,6 +5,7 @@ import * as React from "react";
 import * as SelectPrimitive from "@radix-ui/react-select";
 import { cn } from "@/utils/cn";
 import { Label } from "./Label";
+import { IoIosArrowDown } from "react-icons/io";
 
 // Root
 function Select(props) {
@@ -17,21 +18,21 @@ function SelectTrigger({ className, placeholder, children, ...props }) {
     <SelectPrimitive.Trigger
       data-slot="select-trigger"
       className={cn(
-        "flex gap-2 items-center justify-between w-full h-9 rounded-[6px] border bg-transparent px-3 py-2 text-sm md:text-base shadow-xs outline-none transition-colors hover:border-border-active border-border",
+        "flex gap-2 items-center justify-between w-full rounded-[6px] border bg-transparent px-3 py-2 text-sm md:text-base shadow-xs outline-none transition-colors hover:border-border-active border-border",
         "disabled:cursor-not-allowed disabled:bg-disabled disabled:border-none disabled:shadow-none",
-        "data-[placeholder]:text-muted-foreground cursor-pointer",
+        "data-[placeholder]:text-on-muted cursor-pointer",
         className
       )}
       {...props}
     >
       <SelectPrimitive.Value
         placeholder={placeholder}
-        className="data-[placeholder]:text-muted-foreground"
+        className="data-[placeholder]:text-on-muted"
       >
         {children}
       </SelectPrimitive.Value>
       <SelectPrimitive.Icon>
-        <ArrowDownIcon className="data-[placeholder]:text-muted-foreground" />
+        <IoIosArrowDown className="data-[placeholder]:text-on-muted" />
       </SelectPrimitive.Icon>
     </SelectPrimitive.Trigger>
   );
@@ -47,12 +48,12 @@ function SelectContent({ className, sideOffset = 8, ...props }) {
         sideOffset={sideOffset}
         style={{ minWidth: "var(--radix-select-trigger-width)" }}
         className={cn(
-          "rounded-[6px] border border-input bg-white shadow-xs focus:outline-none",
+          "rounded-[6px] border border-border shadow-xs focus:outline-none",
           className
         )}
         {...props}
       >
-        <SelectPrimitive.Viewport className="space-y-2 py-2">
+        <SelectPrimitive.Viewport>
           {props.children}
         </SelectPrimitive.Viewport>
       </SelectPrimitive.Content>
@@ -66,7 +67,7 @@ function SelectItem({ className, children, ...props }) {
     <SelectPrimitive.Item
       data-slot="select-item"
       className={cn(
-        "cursor-pointer select-none px-3 rounded-md text-sm md:text-base text-muted-foreground",
+        "cursor-pointer select-none px-3 py-2 text-sm md:text-base text-on-muted hover:bg-zinc-100",
         "data-[state=checked]:font-semibold data-[state=checked]:text-black outline-none",
         className
       )}
@@ -95,12 +96,19 @@ function SelectInputComponent({
   label,
   helperText,
   options = [],
+  placeholder,
+  ...props
 }) {
   return (
     <div className="w-full">
       {label && <Label className="pb-2">{label}</Label>}
-      <Select value={value} onValueChange={onChange}>
-        <SelectTrigger placeholder="Select an option">{value}</SelectTrigger>
+      <Select
+        value={value === "" ? undefined : value}
+        onValueChange={onChange}
+        {...props}
+      >
+        <SelectTrigger placeholder={placeholder || "Select an option"}/>
+          
         <SelectContent>
           {options.map((option) => (
             <SelectItem key={option.value} value={option.value}>
@@ -110,7 +118,7 @@ function SelectInputComponent({
         </SelectContent>
       </Select>
       {helperText && (
-        <p className={cn("mt-1 text-sm text-muted-foreground")}>{helperText}</p>
+        <p className={cn("mt-1 text-sm text-on-muted")}>{helperText}</p>
       )}
     </div>
   );

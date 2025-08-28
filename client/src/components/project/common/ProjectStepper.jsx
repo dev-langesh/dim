@@ -21,7 +21,6 @@ export default function ProjectStepper() {
         { name: "Review", icon: <IoShieldCheckmark /> },
       ]}
       currentStep={currentStep}
-      className="md:px-24 py-4"
     />
   );
 }

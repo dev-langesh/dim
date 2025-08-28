@@ -12,6 +12,7 @@ router.get(
   repoController.getConnectionStatus
 );
 router.get("/git", validateToken, repoController.getGitRepos);
+router.get("/git/branches", validateToken, repoController.getRepoBranches);
 
 router.get(
   "/github/oauth/callback",

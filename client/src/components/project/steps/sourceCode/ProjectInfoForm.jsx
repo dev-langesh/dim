@@ -95,6 +95,7 @@ export default function ProjectInfoForm({ provider }) {
 
       <form className="space-y-4">
         <Input
+          label="Project Name"
           placeholder="Project Name"
           {...register("app_name")}
           error={errors.app_name}

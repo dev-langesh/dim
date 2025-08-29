@@ -6,6 +6,7 @@ import { repoApi } from "@/api/repoApi";
 import SelectRepository from "./SelectRepository";
 import Card from "@/components/ui/Card";
 import ProjectInfoForm from "./ProjectInfoForm";
+import Separator from "@/components/ui/Separator";
 
 export default function SourceCode() {
   const [connectedRepo, setConnectedRepo] = useState(true);
@@ -47,12 +48,19 @@ export default function SourceCode() {
   }
 
   return (
-    <Card className="flex items-start justify-center md:w-5/6 gap-4 mx-auto shadow-md h-[100%]">
+    <Card className="flex items-start justify-center md:w-5/6 gap-4 mx-auto shadow-md h-[100%] max-md:flex-col">
       <SelectRepository
         setConnectedRepo={setConnectedRepo}
         provider={provider}
       />
-      <div className="h-[350px] w-[1px] bg-zinc-400"></div>
+      {/* <div className="h-[350px] w-[1px] bg-zinc-400"></div> */}
+      <Separator
+        orientation="vertical"
+        className="self-stretch h-auto max-md:hidden"
+      />
+      <Separator
+        className="md:hidden"
+      />
       <ProjectInfoForm provider={provider} />
     </Card>
   );

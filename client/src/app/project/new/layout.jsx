@@ -5,7 +5,7 @@ import React from "react";
 
 export default function CreateProjectLayout({ children }) {
   return (
-    <div className="md:px-16 px-10 pt-10">
+    <div className="md:px-16 p-10 max-w-[1700px] mx-auto">
       <ProjectFormProvider>
         <ProjectStepper />
         <br />

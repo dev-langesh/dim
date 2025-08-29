@@ -7,6 +7,7 @@ import SelectRepository from "./SelectRepository";
 import Card from "@/components/ui/Card";
 import ProjectInfoForm from "./ProjectInfoForm";
 import Separator from "@/components/ui/Separator";
+import { CircularProgress } from "@/components/ui/CircularProgress";
 
 export default function SourceCode() {
   const [connectedRepo, setConnectedRepo] = useState(true);
@@ -40,7 +41,7 @@ export default function SourceCode() {
   }, []);
 
   if (loading) {
-    return <div>Loading...</div>;
+    return <CircularProgress />;
   }
 
   if (!connectedRepo) {
@@ -48,7 +49,7 @@ export default function SourceCode() {
   }
 
   return (
-    <Card className="flex items-start justify-center md:w-5/6 gap-4 mx-auto shadow-md h-[100%] max-md:flex-col">
+    <Card className="flex items-start justify-center w-full md:w-[700px] lg:w-[800px] gap-4 shadow-md max-md:flex-col flex-shrink-0">
       <SelectRepository
         setConnectedRepo={setConnectedRepo}
         provider={provider}
@@ -58,9 +59,7 @@ export default function SourceCode() {
         orientation="vertical"
         className="self-stretch h-auto max-md:hidden"
       />
-      <Separator
-        className="md:hidden"
-      />
+      <Separator className="md:hidden" />
       <ProjectInfoForm provider={provider} />
     </Card>
   );

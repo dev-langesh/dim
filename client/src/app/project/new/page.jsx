@@ -1,10 +1,10 @@
-import SourceCode from '@/components/project/steps/sourceCode/SourceCode'
-import React from 'react'
+import SourceCode from "@/components/project/steps/sourceCode/SourceCode";
+import React from "react";
 
 export default function CreateProjectPage() {
   return (
-    <div>
+    <div className="min-h-[60vh] flex items-center justify-center">
       <SourceCode />
     </div>
-  )
+  );
 }

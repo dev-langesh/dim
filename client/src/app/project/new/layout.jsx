@@ -5,12 +5,12 @@ import React from "react";
 
 export default function CreateProjectLayout({ children }) {
   return (
-    <div className="md:px-16 p-10 max-w-[1700px] mx-auto">
+    <div className="max-sm:p-3 md:px-16 p-10 max-w-[1700px] mx-auto">
       <ProjectFormProvider>
         <ProjectStepper />
         <br />
         <br />
-        <div className="min-h-[60vh]">{children}</div>
+        {children}
         <br />
         <br />
         <ChangeStep />

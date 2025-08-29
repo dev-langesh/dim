@@ -418,6 +418,161 @@ async function getRepoBranches({ provider, userId, repository }) {
   }
 }
 
+// ---------- GitHub ----------
+async function getGithubContents({ installationId, repository, path, branch }) {
+  const [owner, repoName] = repository.split("/");
+  const octokit = await getOctokitInstance(installationId);
+
+  try {
+    const res = await octokit.request(`GET /repos/${owner}/${repoName}/contents/${path || ""}`, {
+      ref: branch || "main",
+    });
+
+    // If repo is empty, GitHub returns an array or object differently
+    if (!res.data || (Array.isArray(res.data) && res.data.length === 0)) {
+      throw new AppError(ConnectRepoErrors.EMPTY_REPO);
+    }
+
+    return (Array.isArray(res.data) ? res.data : [res.data]).map((item) => ({
+      name: item.name,
+      type: item.type, // "file" or "dir"
+      path: item.path,
+    }));
+  } catch (e) {
+    console.log(e.response?.data)
+    if (e.response?.data?.message.startsWith("No commit found for the ref")) {
+      throw new AppError(ConnectRepoErrors.REPO_BRANCH_NOT_FOUND);
+    }
+    if (e.status === 404) {
+      if (!path) throw new AppError(ConnectRepoErrors.EMPTY_REPO);
+      throw new AppError(ConnectRepoErrors.REPO_NOT_FOUND);
+    }
+    return [];
+  }
+}
+
+// ---------- GitLab ----------
+async function getGitlabContents({ accessToken, repository, path, branch }) {
+  const encodedRepo = encodeURIComponent(repository);
+  const url = `https://gitlab.com/api/v4/projects/${encodedRepo}/repository/tree?path=${encodeURIComponent(
+    path || ""
+  )}&ref=${branch || "main"}`;
+
+  try {
+    const res = await axios.get(url, {
+      headers: { Authorization: `Bearer ${accessToken}` },
+    });
+
+    return res.data.map((item) => ({
+      name: item.name,
+      type: item.type, // "tree" or "blob"
+      path: item.path,
+    }));
+  } catch (e) {
+    if (e.response?.data?.message === "404 Tree Not Found" && !path) {
+      throw new AppError(ConnectRepoErrors.EMPTY_REPO);
+    }
+    if (e.response?.data?.message === "404 Project Not Found") {
+      throw new AppError(ConnectRepoErrors.REPO_NOT_FOUND);
+    } if (
+      e.response?.data?.message === "404 invalid revision or path Not Found"
+    ) {
+      throw new AppError(ConnectRepoErrors.REPO_PATH_NOT_FOUND);
+    }
+    return [];
+  }
+}
+
+// ---------- Bitbucket ----------
+async function getBitbucketContents({ accessToken, repository, path, branch }) {
+  const url = `https://api.bitbucket.org/2.0/repositories/${repository}/src/${
+    encodeURIComponent(branch || "HEAD")
+  }/${path || ""}`;
+
+  try {
+    const res = await axios.get(url, {
+      headers: { Authorization: `Bearer ${accessToken}` },
+    });
+
+    const values = res.data.values || [];
+    if (values.length === 0 && !path) {
+      throw new AppError(ConnectRepoErrors.EMPTY_REPO);
+    }
+
+    return values.map((item) => ({
+      name: item.path.replace(/^.*\//, ""),
+      type: item.type, // "commit_file" or "directory"
+      path: item.path,
+    }));
+  } catch (e) {
+    console.log(e.response?.data)
+    if(e.response?.data?.error?.message.startsWith("No such file")) { throw new AppError(ConnectRepoErrors.REPO_PATH_NOT_FOUND);}
+    if (e.response?.data?.error?.message.startsWith("Commit not found")) {
+      throw new AppError(ConnectRepoErrors.REPO_BRANCH_NOT_FOUND);
+    }
+    if (e.response?.status === 404) {
+      throw new AppError(ConnectRepoErrors.REPO_NOT_FOUND);
+    }
+    return [];
+  }
+}
+
+async function getRepoContents({
+  userId,
+  provider,
+  repository,
+  path = "",
+  returnFormat = "all",
+  branch,
+}) {
+  const repo = await getRepoByUserId(userId);
+
+  let contents;
+  switch (provider.toLowerCase()) {
+    case "github":
+      contents = await getGithubContents({
+        installationId: repo.github?.installationId,
+        repository,
+        path,
+        branch,
+      });
+      break;
+    case "gitlab":
+      contents = await getGitlabContents({
+        accessToken: repo.gitlab?.accessToken,
+        repository,
+        path,
+        branch,
+      });
+      break;
+    case "bitbucket":
+      contents = await getBitbucketContents({
+        accessToken: repo.bitbucket?.accessToken,
+        repository,
+        path,
+        branch,
+      });
+      break;
+    default:
+      throw new Error(`Unsupported provider: ${provider}`);
+  }
+
+  if (returnFormat === "all") return contents;
+
+  return contents.filter((item) => {
+    if (returnFormat === "folders")
+      return (
+        item.type === "dir" || item.type === "tree" || item.type === "directory"
+      );
+    if (returnFormat === "files")
+      return (
+        item.type === "file" ||
+        item.type === "blob" ||
+        item.type === "commit_file"
+      );
+  });
+}
+
 const repoService = {
   githubOauthCallback,
   bitbucketOauthCallback,
@@ -427,6 +582,7 @@ const repoService = {
   getConnectionStatus,
   gitlabOauthCallback,
   getRepoBranches,
+  getRepoContents,
 };
 
 module.exports = { repoService };

@@ -46,8 +46,15 @@ async function getConnectionStatus(req, res) {
 async function getRepoBranches(req, res) {
   const sRes = await repoService.getRepoBranches({
     userId: req.user._id,
-    repository: req.query.repository,
-    provider: req.query.provider,
+    ...req.query,
+  });
+  return res.json(sRes);
+}
+
+async function getRepoContents(req, res) {
+  const sRes = await repoService.getRepoContents({
+    userId: req.user._id,
+    ...req.query,
   });
   return res.json(sRes);
 }
@@ -61,6 +68,7 @@ const repoController = {
   getRepo: asyncHandler(getRepo),
   getConnectionStatus: asyncHandler(getConnectionStatus),
   getRepoBranches: asyncHandler(getRepoBranches),
+  getRepoContents: asyncHandler(getRepoContents),
 };
 
 module.exports = { repoController };

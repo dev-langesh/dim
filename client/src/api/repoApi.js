@@ -12,4 +12,5 @@ export const repoApi = {
   getGitRepos: (q) => protectedApi.get(`/repos/git/?${q}`),
   getRepoConnectionStatus: () => protectedApi.get(`/repos/connection-status`),
   getRepoBranches: (q) => protectedApi.get(`/repos/git/branches/?${q}`),
+  getRepoContents: (q) => protectedApi.get(`/repos/git/contents/?${q}`),
 };

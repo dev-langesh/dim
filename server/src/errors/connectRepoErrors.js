@@ -19,6 +19,26 @@ const ConnectRepoErrors = {
     message: "Failed to fetch repositories.",
     statusCode: 500,
   },
+  EMPTY_REPO: {
+    errorCode: 4005,
+    message: "Repository is empty.",
+    statusCode: 400,
+  },
+  REPO_NOT_FOUND: {
+    errorCode: 4006,
+    message: "Repository not found.",
+    statusCode: 404,
+  },
+  REPO_PATH_NOT_FOUND: {
+    errorCode: 4007,
+    message: "Repository path not found.",
+    statusCode: 404,
+  },
+  REPO_BRANCH_NOT_FOUND: {
+    errorCode: 4008,
+    message: "Repository branch not found.",
+    statusCode: 404,
+  },
 };
 
 module.exports = { ConnectRepoErrors };

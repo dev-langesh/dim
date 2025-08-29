@@ -2,7 +2,7 @@
 
 import { repoApi } from "@/api/repoApi";
 import Input from "@/components/ui/Input";
-import {  getGithubRepo, setState } from "@/redux/slices/projectSlice";
+import { getGithubRepo, setState } from "@/redux/slices/projectSlice";
 import React, { useEffect, useState, useRef } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { FaGithub, FaGitlab, FaBitbucket } from "react-icons/fa";

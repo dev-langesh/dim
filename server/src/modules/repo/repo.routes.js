@@ -13,6 +13,7 @@ router.get(
 );
 router.get("/git", validateToken, repoController.getGitRepos);
 router.get("/git/branches", validateToken, repoController.getRepoBranches);
+router.get("/git/contents", validateToken, repoController.getRepoContents);
 
 router.get(
   "/github/oauth/callback",

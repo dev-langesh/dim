@@ -7,6 +7,8 @@ import React, { useEffect, useState, useRef } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { FaGithub, FaGitlab, FaBitbucket } from "react-icons/fa";
 import { cn } from "@/utils/cn";
+import Link from "next/link";
+import Tooltip from "@/components/ui/Tooltip";
 
 export default function SelectRepository({ setConnectedRepo, provider }) {
   const [query, setQuery] = useState("");
@@ -73,9 +75,40 @@ export default function SelectRepository({ setConnectedRepo, provider }) {
 
   return (
     <div className="w-full">
-      <h2 className="flex items-center gap-2 text-lg font-semibold mb-4 capitalize">
-        <Icon className="text-xl" /> Select {provider} Repository
-      </h2>
+      <div className="flex items-center justify-between mb-4">
+        <h2 className="flex items-center gap-2 text-lg font-semibold  capitalize">
+          <Icon className="text-xl" /> Select {provider} Repository
+        </h2>
+        <div className="flex items-center gap-2">
+          {provider !== "github" && (
+            <Tooltip text="Connect Github">
+              <Link
+                href={`https://github.com/login/oauth/authorize?client_id=${process.env.NEXT_PUBLIC_GITHUB_CLIENT_ID}&redirect_uri=${process.env.NEXT_PUBLIC_GITHUB_OAUTH_CALLBACK}&scope=user`}
+              >
+                <FaGithub />
+              </Link>
+            </Tooltip>
+          )}
+          {provider !== "gitlab" && (
+            <Tooltip text="Connect Gitlab">
+              <Link
+                href={`https://gitlab.com/oauth/authorize?client_id=${process.env.NEXT_PUBLIC_GITLAB_CLIENT_ID}&redirect_uri=${process.env.NEXT_PUBLIC_GITLAB_OAUTH_CALLBACK}&response_type=code&scope=read_user+read_api`}
+              >
+                <FaGitlab className="text-orange-600" />
+              </Link>
+            </Tooltip>
+          )}
+          {provider !== "bitbucket" && (
+            <Tooltip text="Connect Bitbucket">
+              <Link
+                href={`https://bitbucket.org/site/oauth2/authorize?client_id=${process.env.NEXT_PUBLIC_BITBUCKET_CLIENT_ID}&response_type=code&redirect_uri=${process.env.NEXT_PUBLIC_BITBUCKET_OAUTH_CALLBACK}`}
+              >
+                <FaBitbucket className="text-blue-600" />
+              </Link>
+            </Tooltip>
+          )}
+        </div>
+      </div>
 
       <div className="relative">
         <Input
@@ -97,7 +130,7 @@ export default function SelectRepository({ setConnectedRepo, provider }) {
       )}
 
       {!loading && (
-        <ul className="mt-4 space-y-2">
+        <ul className="mt-4 space-y-2 max-h-[300px] overflow-y-auto">
           {repos.map((repo) => {
             const isSelected = githubRepo === repo;
             return (

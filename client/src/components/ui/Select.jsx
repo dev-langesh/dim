@@ -48,7 +48,7 @@ function SelectContent({ className, sideOffset = 8, ...props }) {
         sideOffset={sideOffset}
         style={{ minWidth: "var(--radix-select-trigger-width)" }}
         className={cn(
-          "rounded-[6px] border border-border shadow-xs focus:outline-none",
+          "rounded-[6px] border border-border shadow-xs focus:outline-none bg-white",
           className
         )}
         {...props}
@@ -94,6 +94,8 @@ function SelectInputComponent({
   value,
   onChange,
   label,
+  error,
+  success,
   helperText,
   options = [],
   placeholder,
@@ -118,7 +120,7 @@ function SelectInputComponent({
         </SelectContent>
       </Select>
       {helperText && (
-        <p className={cn("mt-1 text-sm text-on-muted")}>{helperText}</p>
+        <p className={cn("mt-1 text-sm text-on-muted", error && "text-destructive", success && "text-success")}>{helperText}</p>
       )}
     </div>
   );

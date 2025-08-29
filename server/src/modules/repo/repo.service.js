@@ -361,13 +361,13 @@ async function getConnectionStatus(userId) {
   return { connected: true, repo };
 }
 
-async function getGithubBranches({ installationId, repo }) {
+async function getGithubBranches({ installationId, repository }) {
+  const [owner, repoName] = repository.split("/");
   const octokit = await getOctokitInstance(installationId);
 
-  const res = await octokit.request(`GET /repos/${repo}/branches`, {
+  const res = await octokit.request(`GET /repos/${repository}/branches`, {
     owner,
     repo: repoName,
-    per_page: 100,
   });
 
   return res.data.map((branch) => branch.name);
@@ -385,8 +385,8 @@ async function getGitlabBranches({ accessToken, repository }) {
   return res.data.map((branch) => branch.name);
 }
 
-async function getBitbucketBranches({ accessToken, repo }) {
-  const url = `https://api.bitbucket.org/2.0/repositories/${repo}/refs/branches`;
+async function getBitbucketBranches({ accessToken, repository }) {
+  const url = `https://api.bitbucket.org/2.0/repositories/${repository}/refs/branches`;
 
   const res = await axios.get(url, {
     headers: { Authorization: `Bearer ${accessToken}` },

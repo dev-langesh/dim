@@ -11,12 +11,7 @@ import { useProjectForm } from "@/context/ProjectFormProvider";
 import { repoApi } from "@/api/repoApi";
 import { toast } from "react-toastify";
 import { SelectInput } from "@/components/ui/Select";
-
-// Zod schema for validation
-const projectInfoSchema = z.object({
-  projectName: z.string().min(1, "Project name is required"),
-  repoUrl: z.string().url("Enter a valid repository URL"),
-});
+import { projectInfoSchema } from "@/schemas/project.schema";
 
 export default function ProjectInfoForm({ provider }) {
   const [branches, setBranches] = useState([]);
@@ -34,10 +29,6 @@ export default function ProjectInfoForm({ provider }) {
     control,
   } = useForm({
     resolver: zodResolver(projectInfoSchema),
-    defaultValues: {
-      projectName: "",
-      repoUrl: selectedRepo || "",
-    },
   });
 
   useImperativeHandle(projectFormRef, () => ({
@@ -69,6 +60,15 @@ export default function ProjectInfoForm({ provider }) {
     getRepoBranches();
   }, [selectedRepo, provider]);
 
+  useEffect(() => {
+    for (const branch of branches) {
+      if (branch === "main" || branch === "master") {
+        setValue("git_branch", branch);
+        break;
+      }
+    }
+  }, [branches]);
+
   async function getRepoBranches() {
     try {
       setLoading(true);
@@ -76,8 +76,11 @@ export default function ProjectInfoForm({ provider }) {
         `repository=${selectedRepo}&provider=${provider}`
       );
 
-      if (!res.data?.length)
+      if (!res.data?.length) {
+        setBranches([]);
         return toast.error("No branches found in the repository");
+      }
+
       setBranches(res.data);
     } catch (error) {
       toast.error(error.response?.data.message || "Failed to fetch branches");
@@ -93,13 +96,13 @@ export default function ProjectInfoForm({ provider }) {
       <form className="space-y-4">
         <Input
           placeholder="Project Name"
-          {...register("projectName")}
-          error={errors.projectName}
-          helperText={errors.projectName?.message}
+          {...register("app_name")}
+          error={errors.app_name}
+          helperText={errors.app_name?.message}
         />
 
         <Controller
-          name="branch"
+          name="git_branch"
           control={control}
           rules={{ required: "Branch selection is required" }}
           render={({ field: { onChange, value } }) => (
@@ -111,7 +114,8 @@ export default function ProjectInfoForm({ provider }) {
                 value: branch,
                 label: branch,
               }))}
-              helperText={errors.branch?.message}
+              error={errors.git_branch}
+              helperText={errors.git_branch?.message}
               placeholder={loading ? "Loading..." : "Select a branch"}
               disabled={branches.length === 0 || loading}
             />

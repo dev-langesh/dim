@@ -10,7 +10,7 @@ export default function CreateProjectLayout({ children }) {
         <ProjectStepper />
         <br />
         <br />
-        {children}
+        <div className="min-h-[60vh]">{children}</div>
         <br />
         <br />
         <ChangeStep />

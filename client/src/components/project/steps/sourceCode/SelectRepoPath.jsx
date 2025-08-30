@@ -8,12 +8,9 @@ import { Label } from "@/components/ui/Label";
 import { getGithubRepo } from "@/redux/slices/projectSlice";
 import { repoApi } from "@/api/repoApi";
 import { toast } from "react-toastify";
-import { IoIosArrowDown, IoIosArrowForward } from "react-icons/io";
 import Input from "@/components/ui/Input";
 import Button from "@/components/ui/Button";
-import TreeNode from "@/components/ui/TreeNode";
-
-
+import TreeNode from "@/components/project/steps/sourceCode/TreeNode";
 
 export default function SelectRepoPath({ provider }) {
   const { control, watch } = useFormContext();

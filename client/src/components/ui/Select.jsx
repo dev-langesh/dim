@@ -48,14 +48,12 @@ function SelectContent({ className, sideOffset = 8, ...props }) {
         sideOffset={sideOffset}
         style={{ minWidth: "var(--radix-select-trigger-width)" }}
         className={cn(
-          "rounded-[6px] border border-border shadow-xs focus:outline-none bg-white",
+          "rounded-[6px] border border-border shadow-xs focus:outline-none bg-zinc-50",
           className
         )}
         {...props}
       >
-        <SelectPrimitive.Viewport>
-          {props.children}
-        </SelectPrimitive.Viewport>
+        <SelectPrimitive.Viewport>{props.children}</SelectPrimitive.Viewport>
       </SelectPrimitive.Content>
     </SelectPrimitive.Portal>
   );
@@ -109,8 +107,14 @@ function SelectInputComponent({
         onValueChange={onChange}
         {...props}
       >
-        <SelectTrigger placeholder={placeholder || "Select an option"}/>
-          
+        <SelectTrigger
+          placeholder={placeholder || "Select an option"}
+          className={cn(
+            error && "border-destructive",
+            success && "border-success"
+          )}
+        />
+
         <SelectContent>
           {options.map((option) => (
             <SelectItem key={option.value} value={option.value}>
@@ -120,7 +124,15 @@ function SelectInputComponent({
         </SelectContent>
       </Select>
       {helperText && (
-        <p className={cn("mt-1 text-sm text-on-muted", error && "text-destructive", success && "text-success")}>{helperText}</p>
+        <p
+          className={cn(
+            "mt-1 text-sm text-on-muted",
+            error && "text-destructive",
+            success && "text-success"
+          )}
+        >
+          {helperText}
+        </p>
       )}
     </div>
   );

@@ -3,14 +3,13 @@ import { cn } from "@/utils/cn";
 const { useState, memo } = require("react");
 const { IoIosArrowDown, IoIosArrowForward } = require("react-icons/io");
 
-
 function TreeNodeComponent({ node, onSelect, fetchChildren, selectedPath }) {
   const [expanded, setExpanded] = useState(false);
   const [children, setChildren] = useState([]);
   const [loading, setLoading] = useState(false);
 
   async function handleExpand() {
-    if (node.type !== "dir") return;
+    if (node.type !== "dir" || loading) return;
     if (children?.length) {
       setExpanded((prev) => !prev);
       return;
@@ -25,9 +24,12 @@ function TreeNodeComponent({ node, onSelect, fetchChildren, selectedPath }) {
         toast.error("Failed to fetch directory");
       } finally {
         setLoading(false);
-        console.log("loading stop");
       }
     }
+    toggleExpand();
+  }
+
+  function toggleExpand() {
     setExpanded((prev) => !prev);
   }
 
@@ -35,27 +37,41 @@ function TreeNodeComponent({ node, onSelect, fetchChildren, selectedPath }) {
     <div>
       <div
         className={cn(
-          "flex items-center gap-2 cursor-pointer px-3 py-2 rounded hover:bg-zinc-100",
+          "flex items-center gap-2 cursor-pointer pr-3 py-1  rounded hover:bg-zinc-100",
           selectedPath === node.path && "bg-zinc-200 font-medium",
           loading && "bg-zinc-200 animate-pulse hover:bg-zinc-200"
         )}
-        onClick={() => {
-          if (node.type === "dir") {
-            handleExpand();
-          }
-          onSelect(node.path);
-        }}
       >
         {node.type === "dir" ? (
           expanded ? (
-            <IoIosArrowDown size={14} />
+            <button
+              type="button"
+              onClick={toggleExpand}
+              className="p-2 pl-3 outline-none cursor-pointer"
+            >
+              <IoIosArrowDown size={14} />
+            </button>
           ) : (
-            <IoIosArrowForward size={14} />
+            <button
+              type="button"
+              onClick={handleExpand}
+              className="p-2 pl-3 outline-none cursor-pointer"
+            >
+              <IoIosArrowForward size={14} />
+            </button>
           )
         ) : (
           <span className="w-[14px]" />
         )}
-        {node.type === "dir" ? `${node.name}` : `${node.name}`}
+        <button
+          type="button"
+          onClick={() => {
+            onSelect(node.path);
+          }}
+          className=" outline-none cursor-pointer"
+        >
+          {node.type === "dir" ? `${node.name}` : `${node.name}`}
+        </button>
       </div>
 
       {expanded && !loading && (

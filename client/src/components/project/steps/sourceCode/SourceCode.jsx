@@ -8,11 +8,18 @@ import Card from "@/components/ui/Card";
 import ProjectInfoForm from "./ProjectInfoForm";
 import Separator from "@/components/ui/Separator";
 import { CircularProgress } from "@/components/ui/CircularProgress";
+import { FormProvider, useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { projectInfoSchema } from "@/schemas/project.schema";
 
 export default function SourceCode() {
   const [connectedRepo, setConnectedRepo] = useState(true);
   const [provider, setProvider] = useState("");
   const [loading, setLoading] = useState(true);
+
+  const methods = useForm({
+    resolver: zodResolver(projectInfoSchema),
+  });
 
   async function getRepoConnection() {
     try {
@@ -50,17 +57,19 @@ export default function SourceCode() {
 
   return (
     <Card className="flex items-start justify-center w-full md:w-[700px] lg:w-[800px] gap-4 shadow-md max-md:flex-col flex-shrink-0">
-      <SelectRepository
-        setConnectedRepo={setConnectedRepo}
-        provider={provider}
-      />
-      {/* <div className="h-[350px] w-[1px] bg-zinc-400"></div> */}
-      <Separator
-        orientation="vertical"
-        className="self-stretch h-auto max-md:hidden"
-      />
-      <Separator className="md:hidden" />
-      <ProjectInfoForm provider={provider} />
+      <FormProvider {...methods}>
+        <SelectRepository
+          setConnectedRepo={setConnectedRepo}
+          provider={provider}
+        />
+        {/* <div className="h-[350px] w-[1px] bg-zinc-400"></div> */}
+        <Separator
+          orientation="vertical"
+          className="self-stretch h-auto max-md:hidden"
+        />
+        <Separator className="md:hidden" />
+        <ProjectInfoForm provider={provider} methods={methods} />
+      </FormProvider>
     </Card>
   );
 }

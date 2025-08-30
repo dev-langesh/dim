@@ -6,8 +6,8 @@ const initialState = {
     app_id: null,
     app_name: null,
     github_repo: null,
-    git_branch: "main",
-    source_dir: "./",
+    git_branch: null,
+    source_dir: "",
     platform: null
   },
 };

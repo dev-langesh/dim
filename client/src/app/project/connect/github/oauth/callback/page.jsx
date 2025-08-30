@@ -4,6 +4,7 @@ import { repoApi } from "@/api/repoApi";
 import { CircularProgress } from "@/components/ui/CircularProgress";
 import { useSearchParams, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
+import { toast } from "react-toastify";
 
 export default function GithubOAuthCallback() {
   const [error, setError] = useState(false);
@@ -15,15 +16,16 @@ export default function GithubOAuthCallback() {
   async function handleOAuthCallback() {
     try {
       await repoApi.githubOauthCallback(searchParams.toString());
+      router.push(
+        `https://github.com/apps/${process.env.NEXT_PUBLIC_GITHUB_APP_NAME}/installations/new`
+      );
     } catch (e) {
       setError(true);
+      toast.error(e.response?.data?.message);
+      router.push("/project/new");
     } finally {
       setLoading(false);
     }
-
-    router.push(
-      `https://github.com/apps/${process.env.NEXT_PUBLIC_GITHUB_APP_NAME}/installations/new`
-    );
   }
 
   useEffect(() => {

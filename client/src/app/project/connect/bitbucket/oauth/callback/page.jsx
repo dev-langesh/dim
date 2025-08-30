@@ -4,6 +4,7 @@ import { repoApi } from "@/api/repoApi";
 import { CircularProgress } from "@/components/ui/CircularProgress";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
+import { toast } from "react-toastify";
 
 export default function BitbucketOAuthCallback() {
   const [error, setError] = useState(false);
@@ -17,6 +18,7 @@ export default function BitbucketOAuthCallback() {
       await repoApi.bitbucketOauthCallback(searchParams.toString());
     } catch (e) {
       setError(true);
+      toast.error(e.response?.data?.message);
     } finally {
       setLoading(false);
     }

@@ -1,12 +1,11 @@
-const axios = require("axios");
-const fs = require("fs").promises;
-const { config } = require("../../config/constants");
-const { createAppAuth } = require("@octokit/auth-app");
-const { Octokit } = require("@octokit/rest");
-const { env } = require("../../config/env");
 const { Repo } = require("./repo.model");
 const { AppError } = require("../../utils/error");
 const { ConnectRepoErrors } = require("../../errors/connectRepoErrors");
+const { githubService } = require("../../lib/repository/github/github.service");
+const {
+  bitbucketService,
+} = require("../../lib/repository/bitbucket/bitbucket.service");
+const { gitlabService } = require("../../lib/repository/gitlab/gitlab.service");
 
 async function createRepo(remoteRepo, data) {
   let repo = await Repo.findOne({ user: data.userId });
@@ -53,295 +52,85 @@ async function getRepoByUserId(userId) {
 }
 
 async function githubOauthCallback(code, userId) {
-  const tokenRes = await axios.post(
-    `https://github.com/login/oauth/access_token`,
-    {
-      client_id: env.GITHUB_CLIENT_ID,
-      client_secret: env.GITHUB_CLIENT_SECRET,
-      code,
-    },
-    {
-      headers: {
-        Accept: "application/json",
-      },
-    }
-  );
+  const token = await githubService.getAccessToken(code);
 
-  const accessToken = tokenRes.data.access_token;
-
-  const userRes = await axios.get("https://api.github.com/user", {
-    headers: {
-      Authorization: `token ${accessToken}`,
-    },
-  });
+  const user = await githubService.getUser(token.access_token);
 
   await createRepo("github", {
     userId,
-    username: userRes.data.login,
-  });
-
-  return;
-}
-
-async function getOctokitInstance(installationId) {
-  const appId = env.GITHUB_APP_ID;
-  const privateKey = await fs.readFile(
-    config.GITHUB_APP_PRIVATE_KEY_PATH,
-    "utf8"
-  );
-
-  return new Octokit({
-    authStrategy: createAppAuth,
-    auth: {
-      appId,
-      privateKey,
-      installationId,
-    },
+    username: user.login,
   });
 }
 
 async function githubInstallAppCallback(installationId, userId) {
-  const octokit = await getOctokitInstance(installationId);
-
-  // Generate installation token
-  const { token } = await octokit.auth({
-    type: "installation",
-  });
-
-  const repo = await createRepo("github", {
+  await createRepo("github", {
     userId,
-    token,
     installationId,
   });
-
-  return repo;
 }
 
 async function bitbucketOauthCallback(code, userId) {
-  const tokenRes = await axios.post(
-    "https://bitbucket.org/site/oauth2/access_token",
-    new URLSearchParams({
-      grant_type: "authorization_code",
-      code,
-      redirect_uri: env.BITBUCKET_CALLBACK_URL,
-    }),
-    {
-      auth: {
-        username: env.BITBUCKET_CLIENT_ID,
-        password: env.BITBUCKET_CLIENT_SECRET,
-      },
-    }
-  );
+  const tokens = await bitbucketService.getAccessToken(code);
 
-  console.log(tokenRes.data);
-
-  const accessToken = tokenRes.data.access_token;
-  const refreshToken = tokenRes.data.refresh_token;
-
-  // Fetch user info
-  const userRes = await axios.get("https://api.bitbucket.org/2.0/user", {
-    headers: { Authorization: `Bearer ${accessToken}` },
-  });
+  const user = await bitbucketService.getUser(tokens.access_token);
 
   await createRepo("bitbucket", {
     userId,
-    username: userRes.data.username,
-    accessToken: accessToken,
-    refreshToken: refreshToken,
+    username: user.username,
+    accessToken: tokens.access_token,
+    refreshToken: tokens.refresh_token,
   });
-
-  return;
 }
 
 async function gitlabOauthCallback(code, userId) {
-  try {
-    // 1. Exchange code for access token
-    const tokenRes = await axios.post("https://gitlab.com/oauth/token", {
-      client_id: env.GITLAB_CLIENT_ID,
-      client_secret: env.GITLAB_CLIENT_SECRET,
-      code,
-      grant_type: "authorization_code",
-      redirect_uri: env.GITLAB_CALLBACK_URL,
-    });
+  const tokens = await gitlabService.getAccessToken(code);
 
-    const accessToken = tokenRes.data.access_token;
-    const refreshToken = tokenRes.data.refresh_token;
+  const user = await gitlabService.getUser(tokens.access_token);
 
-    // 2. Fetch user profile
-    const userRes = await axios.get("https://gitlab.com/api/v4/user", {
-      headers: {
-        Authorization: `Bearer ${accessToken}`,
-      },
-    });
-
-    const { username } = userRes.data;
-
-    // 3. Save/update in Repo collection
-    await createRepo("gitlab", {
-      userId,
-      accessToken,
-      refreshToken,
-      username,
-    });
-
-    return;
-  } catch (e) {
-    console.error("GitLab OAuth error:", e.response?.data || e.message);
-  }
-}
-
-async function getGithubRepos(data) {
-  const octokit = await getOctokitInstance(data.installationId);
-
-  const repos = await octokit.request("GET /search/repositories", {
-    q: `${data.query || ""} in:name user:${data.username}`,
-    sort: "updated", // or "pushed"
-    order: "desc",
-    per_page: 10,
+  await createRepo("gitlab", {
+    userId,
+    username: user.username,
+    accessToken: tokens.access_token,
+    refreshToken: tokens.refresh_token,
   });
-  return repos.data.items.map((r) => `${r.full_name}`);
-}
 
-async function refreshBitbucketToken(refreshToken) {
-  try {
-    const tokenRes = await axios.post(
-      "https://bitbucket.org/site/oauth2/access_token",
-      new URLSearchParams({
-        grant_type: "refresh_token",
-        refresh_token: refreshToken,
-      }),
-      {
-        auth: {
-          username: env.BITBUCKET_CLIENT_ID,
-          password: env.BITBUCKET_CLIENT_SECRET,
-        },
-      }
-    );
-
-    return {
-      accessToken: tokenRes.data.access_token,
-      refreshToken: tokenRes.data.refresh_token,
-    };
-  } catch (error) {
-    console.error("Error refreshing Bitbucket token:", error);
-    throw new AppError(ConnectRepoErrors.FAILED_TO_REFRESH_TOKEN);
-  }
-}
-
-async function getBitbucketRepos({
-  accessToken,
-  refreshToken,
-  query,
-  workspace,
-  repoId,
-}) {
-  const q = query ? `name ~ "${query}"` : "";
-  const sort = "-updated_on";
-
-  let url = `https://api.bitbucket.org/2.0/repositories/${
-    workspace || ""
-  }?role=member&sort=${sort}`;
-  if (q) {
-    url += `&q=${encodeURIComponent(q)}`;
-  }
-
-  try {
-    const res = await axios.get(url, {
-      headers: { Authorization: `Bearer ${accessToken}` },
-    });
-
-    return res.data.values.map((repo) => repo.full_name);
-  } catch (error) {
-    console.log(error.response);
-    try {
-      const tokens = await refreshBitbucketToken(refreshToken);
-
-      await updateRepoById(repoId, "bitbucket", {
-        accessToken: tokens.accessToken,
-        refreshToken: tokens.refreshToken,
-      });
-
-      const res = await axios.get(url, {
-        headers: { Authorization: `Bearer ${tokens.accessToken}` },
-      });
-
-      return res.data.values.map((repo) => repo.full_name);
-    } catch (e) {
-      throw new AppError(ConnectRepoErrors.REFRESH_TOKEN_EXPIRED);
-    }
-  }
-}
-
-async function refreshGitlabToken(refreshToken) {
-  try {
-    const tokenRes = await axios.post("https://gitlab.com/oauth/token", {
-      client_id: env.GITLAB_CLIENT_ID,
-      client_secret: env.GITLAB_CLIENT_SECRET,
-      grant_type: "refresh_token",
-      refresh_token: refreshToken,
-      redirect_uri: env.GITLAB_CALLBACK_URL,
-    });
-
-    return {
-      accessToken: tokenRes.data.access_token,
-      refreshToken: tokenRes.data.refresh_token,
-    };
-  } catch (error) {
-    throw new AppError(ConnectRepoErrors.REFRESH_TOKEN_EXPIRED);
-  }
-}
-
-async function getGitlabRepos({ accessToken, refreshToken, repoId, query }) {
-  let url = `https://gitlab.com/api/v4/projects?membership=true&order_by=last_activity_at&sort=desc`;
-
-  if (query) {
-    url += `&search=${encodeURIComponent(query)}`;
-  }
-
-  try {
-    const res = await axios.get(url, {
-      headers: { Authorization: `Bearer ${accessToken}` },
-    });
-
-    return res.data.map((repo) => repo.path_with_namespace);
-  } catch (error) {
-    try {
-      const tokens = await refreshGitlabToken(refreshToken);
-
-      await updateRepoById(repoId, "gitlab", {
-        accessToken: tokens.accessToken,
-        refreshToken: tokens.refreshToken,
-      });
-
-      const res = await axios.get(url, {
-        headers: { Authorization: `Bearer ${tokens.accessToken}` },
-      });
-
-      return res.data.map((repo) => repo.path_with_namespace);
-    } catch (e) {
-      throw new AppError(ConnectRepoErrors.REFRESH_TOKEN_EXPIRED);
-    }
-  }
+  return;
 }
 
 async function getGitRepos(userId, query) {
   const repo = await getRepoByUserId(userId);
   if (repo.github?.installationId && repo.github?.username) {
-    return await getGithubRepos({ ...repo.github, query });
+    return await githubService.getRepositories({ ...repo.github, query });
   } else if (repo.bitbucket?.accessToken && repo.bitbucket?.username) {
-    return await getBitbucketRepos({
+    const res = await bitbucketService.getRepositories({
       accessToken: repo.bitbucket?.accessToken,
       refreshToken: repo.bitbucket?.refreshToken,
       query,
-      repoId: repo._id,
     });
+
+    if (res.rotateTokens) {
+      await updateRepoById(repo._id, "bitbucket", {
+        accessToken: res.rotateTokens.accessToken,
+        refreshToken: res.rotateTokens.refreshToken,
+      });
+    }
+
+    return res.repositories;
   } else if (repo.gitlab?.accessToken && repo.gitlab?.username) {
-    return await getGitlabRepos({
+    const res = await gitlabService.getRepositories({
       accessToken: repo.gitlab?.accessToken,
       refreshToken: repo.gitlab?.refreshToken,
       query,
-      repoId: repo._id,
     });
+
+    if (res.rotateTokens) {
+      await updateRepoById(repo._id, "gitlab", {
+        accessToken: res.rotateTokens.accessToken,
+        refreshToken: res.rotateTokens.refreshToken,
+      });
+    }
+
+    return res.repositories;
   } else {
     throw new AppError(ConnectRepoErrors.REPO_NOT_CONNECTED);
   }
@@ -361,159 +150,30 @@ async function getConnectionStatus(userId) {
   return { connected: true, repo };
 }
 
-async function getGithubBranches({ installationId, repository }) {
-  const [owner, repoName] = repository.split("/");
-  const octokit = await getOctokitInstance(installationId);
-
-  const res = await octokit.request(`GET /repos/${repository}/branches`, {
-    owner,
-    repo: repoName,
-  });
-
-  return res.data.map((branch) => branch.name);
-}
-
-async function getGitlabBranches({ accessToken, repository }) {
-  const encodedRepo = encodeURIComponent(repository);
-
-  const url = `https://gitlab.com/api/v4/projects/${encodedRepo}/repository/branches`;
-
-  const res = await axios.get(url, {
-    headers: { Authorization: `Bearer ${accessToken}` },
-  });
-
-  return res.data.map((branch) => branch.name);
-}
-
-async function getBitbucketBranches({ accessToken, repository }) {
-  const url = `https://api.bitbucket.org/2.0/repositories/${repository}/refs/branches`;
-
-  const res = await axios.get(url, {
-    headers: { Authorization: `Bearer ${accessToken}` },
-  });
-
-  return res.data.values.map((branch) => branch.name);
-}
-
 async function getRepoBranches({ provider, userId, repository }) {
   const repo = await getRepoByUserId(userId);
+  let branches = [];
   switch (provider.toLowerCase()) {
     case "github":
-      return await getGithubBranches({
+      branches = await githubService.getRepositoryBranches({
         installationId: repo.github?.installationId,
         repository,
       });
-    case "gitlab":
-      return await getGitlabBranches({
-        accessToken: repo.gitlab?.accessToken,
-        repository,
-      });
+      return branches.map((branch) => branch.name);
     case "bitbucket":
-      return await getBitbucketBranches({
+      branches = await bitbucketService.getRepositoryBranches({
         accessToken: repo.bitbucket?.accessToken,
         repository,
       });
+      return branches.map((branch) => branch.name);
+    case "gitlab":
+      branches = await gitlabService.getRepositoryBranches({
+        accessToken: repo.gitlab?.accessToken,
+        repository,
+      });
+      return branches.map((branch) => branch.name);
     default:
       throw new Error(`Unsupported provider: ${provider}`);
-  }
-}
-
-// ---------- GitHub ----------
-async function getGithubContents({ installationId, repository, path, branch }) {
-  const [owner, repoName] = repository.split("/");
-  const octokit = await getOctokitInstance(installationId);
-
-  try {
-    const res = await octokit.request(`GET /repos/${owner}/${repoName}/contents/${path || ""}`, {
-      ref: branch || "main",
-    });
-
-    // If repo is empty, GitHub returns an array or object differently
-    if (!res.data || (Array.isArray(res.data) && res.data.length === 0)) {
-      throw new AppError(ConnectRepoErrors.EMPTY_REPO);
-    }
-
-    return (Array.isArray(res.data) ? res.data : [res.data]).map((item) => ({
-      name: item.name,
-      type: item.type, // "file" or "dir"
-      path: item.path,
-    }));
-  } catch (e) {
-    console.log(e.response?.data)
-    if (e.response?.data?.message.startsWith("No commit found for the ref")) {
-      throw new AppError(ConnectRepoErrors.REPO_BRANCH_NOT_FOUND);
-    }
-    if (e.status === 404) {
-      if (!path) throw new AppError(ConnectRepoErrors.EMPTY_REPO);
-      throw new AppError(ConnectRepoErrors.REPO_NOT_FOUND);
-    }
-    return [];
-  }
-}
-
-// ---------- GitLab ----------
-async function getGitlabContents({ accessToken, repository, path, branch }) {
-  const encodedRepo = encodeURIComponent(repository);
-  const url = `https://gitlab.com/api/v4/projects/${encodedRepo}/repository/tree?path=${encodeURIComponent(
-    path || ""
-  )}&ref=${branch || "main"}`;
-
-  try {
-    const res = await axios.get(url, {
-      headers: { Authorization: `Bearer ${accessToken}` },
-    });
-
-    return res.data.map((item) => ({
-      name: item.name,
-      type: item.type, // "tree" or "blob"
-      path: item.path,
-    }));
-  } catch (e) {
-    if (e.response?.data?.message === "404 Tree Not Found" && !path) {
-      throw new AppError(ConnectRepoErrors.EMPTY_REPO);
-    }
-    if (e.response?.data?.message === "404 Project Not Found") {
-      throw new AppError(ConnectRepoErrors.REPO_NOT_FOUND);
-    } if (
-      e.response?.data?.message === "404 invalid revision or path Not Found"
-    ) {
-      throw new AppError(ConnectRepoErrors.REPO_PATH_NOT_FOUND);
-    }
-    return [];
-  }
-}
-
-// ---------- Bitbucket ----------
-async function getBitbucketContents({ accessToken, repository, path, branch }) {
-  const url = `https://api.bitbucket.org/2.0/repositories/${repository}/src/${
-    encodeURIComponent(branch || "HEAD")
-  }/${path || ""}`;
-
-  try {
-    const res = await axios.get(url, {
-      headers: { Authorization: `Bearer ${accessToken}` },
-    });
-
-    const values = res.data.values || [];
-    if (values.length === 0 && !path) {
-      throw new AppError(ConnectRepoErrors.EMPTY_REPO);
-    }
-
-    return values.map((item) => ({
-      name: item.path.replace(/^.*\//, ""),
-      type: item.type, // "commit_file" or "directory"
-      path: item.path,
-    }));
-  } catch (e) {
-    console.log(e.response?.data)
-    if(e.response?.data?.error?.message.startsWith("No such file")) { throw new AppError(ConnectRepoErrors.REPO_PATH_NOT_FOUND);}
-    if (e.response?.data?.error?.message.startsWith("Commit not found")) {
-      throw new AppError(ConnectRepoErrors.REPO_BRANCH_NOT_FOUND);
-    }
-    if (e.response?.status === 404) {
-      throw new AppError(ConnectRepoErrors.REPO_NOT_FOUND);
-    }
-    return [];
   }
 }
 
@@ -530,24 +190,24 @@ async function getRepoContents({
   let contents;
   switch (provider.toLowerCase()) {
     case "github":
-      contents = await getGithubContents({
+      contents = await githubService.getRepositoryContents({
         installationId: repo.github?.installationId,
         repository,
         path,
         branch,
       });
       break;
-    case "gitlab":
-      contents = await getGitlabContents({
-        accessToken: repo.gitlab?.accessToken,
+    case "bitbucket":
+      contents = await bitbucketService.getRepositoryContents({
+        accessToken: repo.bitbucket?.accessToken,
         repository,
         path,
         branch,
       });
       break;
-    case "bitbucket":
-      contents = await getBitbucketContents({
-        accessToken: repo.bitbucket?.accessToken,
+    case "gitlab":
+      contents = await gitlabService.getRepositoryContents({
+        accessToken: repo.gitlab?.accessToken,
         repository,
         path,
         branch,

@@ -18,6 +18,7 @@ const envSchema = z.object({
   SMTP_PASS: z.string(),
   GITHUB_CLIENT_ID: z.string(),
   GITHUB_CLIENT_SECRET: z.string(),
+  GITHUB_API_URL: z.string().url(),
   GITHUB_APP_NAME: z.string(),
   GITHUB_APP_ID: z.string(),
   GITHUB_APP_CLIENT_ID: z.string(),
@@ -25,9 +26,11 @@ const envSchema = z.object({
   BITBUCKET_CLIENT_ID: z.string(),
   BITBUCKET_CLIENT_SECRET: z.string(),
   BITBUCKET_CALLBACK_URL: z.string().url(),
+  BITBUCKET_API_URL: z.string().url(),
   GITLAB_CLIENT_ID: z.string(),
   GITLAB_CLIENT_SECRET: z.string(),
   GITLAB_CALLBACK_URL: z.string().url(),
+  GITLAB_API_URL: z.string().url(), 
 });
 
 const env = envSchema.safeParse(process.env);

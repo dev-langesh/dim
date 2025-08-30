@@ -68,7 +68,7 @@ function TreeNodeComponent({ node, onSelect, fetchChildren, selectedPath }) {
           onClick={() => {
             onSelect(node.path);
           }}
-          className=" outline-none cursor-pointer"
+          className=" outline-none cursor-pointer w-full text-left"
         >
           {node.type === "dir" ? `${node.name}` : `${node.name}`}
         </button>

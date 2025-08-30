@@ -7,9 +7,6 @@ const repoSchema = new mongoose.Schema({
     required: true,
   },
   github: {
-    token: {
-      type: String,
-    },
     installationId: {
       type: String,
     },

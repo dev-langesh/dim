@@ -39,6 +39,21 @@ const ConnectRepoErrors = {
     message: "Repository branch not found.",
     statusCode: 404,
   },
+  FAILED_TO_GET_ACCESS_TOKEN: {
+    errorCode: 4009,
+    message: "Failed to get access token.",
+    statusCode: 401,
+  },
+  FAILED_TO_GET_USER: {
+    errorCode: 4010,
+    message: "Failed to get user.",
+    statusCode: 401,
+  },
+  FAILED_TO_GET_REPOSITORY_BRANCHES: {
+    errorCode: 4011,
+    message: "Failed to get repository branches.",
+    statusCode: 401,
+  },
 };
 
 module.exports = { ConnectRepoErrors };

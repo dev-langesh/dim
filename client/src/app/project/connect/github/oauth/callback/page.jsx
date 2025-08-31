@@ -16,16 +16,17 @@ export default function GithubOAuthCallback() {
   async function handleOAuthCallback() {
     try {
       await repoApi.githubOauthCallback(searchParams.toString());
-      router.push(
-        `https://github.com/apps/${process.env.NEXT_PUBLIC_GITHUB_APP_NAME}/installations/new`
-      );
+      // router.push(
+      //   `https://github.com/apps/${process.env.NEXT_PUBLIC_GITHUB_APP_NAME}/installations/new`
+      // );
     } catch (e) {
       setError(true);
       toast.error(e.response?.data?.message);
-      router.push("/project/new");
     } finally {
       setLoading(false);
     }
+
+    router.push("/project/new");
   }
 
   useEffect(() => {

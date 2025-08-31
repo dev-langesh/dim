@@ -61,6 +61,8 @@ export default function ProjectInfoForm({ provider, methods }) {
   useEffect(() => {
     setBranches([]);
     setValue("git_branch", "");
+    setValue("app_name", selectedRepo?.split("/")?.pop() || "");
+    setValue("source_dir", "");
     if (!selectedRepo?.trim()) return;
     getRepoBranches();
   }, [selectedRepo, provider]);

@@ -1,15 +1,13 @@
 const { ConnectRepoErrors } = require("../../../errors/connectRepoErrors");
 const { AppError } = require("../../../utils/error");
-const { getOctokitInstance } = require("./getOctokitInstance");
+const { githubApi } = require("./githubApi");
 
-async function getRepositoryBranches({ installationId, repository }) {
+async function getRepositoryBranches({ accessToken, repository }) {
   try {
-    const [owner, repoName] = repository.split("/");
-    const octokit = await getOctokitInstance(installationId);
-
-    const res = await octokit.request(`GET /repos/${repository}/branches`, {
-      owner,
-      repo: repoName,
+    const res = await githubApi.get(`/repos/${repository}/branches`, {
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+      },
     });
 
     return res.data;

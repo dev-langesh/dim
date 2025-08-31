@@ -1,21 +1,20 @@
 const { ConnectRepoErrors } = require("../../../errors/connectRepoErrors");
 const { AppError } = require("../../../utils/error");
-const { getOctokitInstance } = require("./getOctokitInstance");
+const { githubApi } = require("./githubApi");
 
 async function getRepositoryContents({
-  installationId,
+  accessToken,
   repository,
   path,
   branch,
 }) {
-  const [owner, repoName] = repository.split("/");
-  const octokit = await getOctokitInstance(installationId);
-
   try {
-    const res = await octokit.request(
-      `GET /repos/${owner}/${repoName}/contents/${path || ""}`,
+    const res = await githubApi.get(
+      `/repos/${repository}/contents${path ? `/${path}` : ""}?ref=${branch}`,
       {
-        ref: branch,
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        },
       }
     );
 
@@ -25,7 +24,7 @@ async function getRepositoryContents({
 
     return (Array.isArray(res.data) ? res.data : [res.data]).map((item) => ({
       name: item.name,
-      type: item.type, 
+      type: item.type,
       path: item.path,
     }));
   } catch (e) {

@@ -29,7 +29,11 @@ async function gitlabOauthCallback(req, res) {
 }
 
 async function getGitRepos(req, res) {
-  const sRes = await repoService.getGitRepos(req.user._id, req.query.q);
+  const sRes = await repoService.getGitRepos({
+    userId: req.user._id,
+    query: req.query.q,
+    provider: req.query.provider,
+  });
   return res.json(sRes);
 }
 

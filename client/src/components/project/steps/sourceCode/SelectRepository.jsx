@@ -27,11 +27,9 @@ export default function SelectRepository({ setConnectedRepo, provider }) {
       ? FaBitbucket
       : null;
 
-  // store AbortController to cancel old requests
   const abortControllerRef = useRef(null);
 
   useEffect(() => {
-    // cancel previous request immediately when query changes
     if (abortControllerRef.current) {
       abortControllerRef.current.abort();
     }
@@ -40,7 +38,18 @@ export default function SelectRepository({ setConnectedRepo, provider }) {
     abortControllerRef.current = controller;
 
     const handler = setTimeout(() => {
-      getRepos(query, controller.signal);
+      const gitUrlRegex =
+        /(?:https?:\/\/|git@)github\.com[:/](?<owner>[^/]+)\/(?<repo>[^/]+?)(?:\.git)?$/;
+
+      const match = query.match(gitUrlRegex);
+
+      if (match?.groups?.owner && match?.groups?.repo) {
+        const extracted = `${match.groups.owner}/${match.groups.repo}`;
+        setQuery(extracted);
+        getRepos(extracted, controller.signal);
+      } else {
+        getRepos(query, controller.signal);
+      }
     }, 500);
 
     return () => {
@@ -52,9 +61,13 @@ export default function SelectRepository({ setConnectedRepo, provider }) {
     setLoading(true);
 
     try {
-      const response = await repoApi.getGitRepos(`q=${searchQuery}`, {
-        signal,
-      });
+      const response = await repoApi.getGitRepos(
+        `q=${searchQuery}&provider=${provider}`,
+        {
+          signal,
+        }
+      );
+      handleSelect(response.data[0] || "");
       setRepos(response.data);
     } catch (error) {
       if (error?.name === "CanceledError" || error?.code === "ERR_CANCELED")
@@ -70,7 +83,7 @@ export default function SelectRepository({ setConnectedRepo, provider }) {
   }
 
   function handleSelect(repo) {
-    dispatch(setState({ github_repo: repo }));
+    dispatch(setState({ git_repo: repo }));
   }
 
   return (
@@ -115,6 +128,7 @@ export default function SelectRepository({ setConnectedRepo, provider }) {
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           placeholder="Search repositories..."
+          helperText="Paste repo URL to list repos with collaborator access"
         />
       </div>
 

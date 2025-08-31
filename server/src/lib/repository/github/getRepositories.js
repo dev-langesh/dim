@@ -1,17 +1,22 @@
 const { ConnectRepoErrors } = require("../../../errors/connectRepoErrors");
 const { AppError } = require("../../../utils/error");
-const { getOctokitInstance } = require("./getOctokitInstance");
+const { githubApi } = require("./githubApi");
 
-async function getRepositories({ installationId, username, query }) {
+async function getRepositories({ accessToken, username, query }) {
   try {
-    const octokit = await getOctokitInstance(installationId);
-
-    const repos = await octokit.request("GET /search/repositories", {
-      q: `${query || ""} in:name user:${username}`,
-      sort: "updated",
-      order: "desc",
-      per_page: 10,
-    });
+    const repos = await githubApi.get(
+      "/search/repositories?" +
+        new URLSearchParams({
+          q: `${query || ""} in:name user:${username}`,
+          sort: "updated",
+          order: "desc",
+        }),
+      {
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        },
+      }
+    );
 
     return repos.data.items.map((r) => `${r.full_name}`);
   } catch (e) {

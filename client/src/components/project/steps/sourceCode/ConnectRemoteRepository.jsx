@@ -16,7 +16,7 @@ export default function ConnectRemoteRepository({ className }) {
       <RepoCard
         Icon={FaGithub}
         repoName="Github"
-        OAuthUri={`https://github.com/login/oauth/authorize?client_id=${process.env.NEXT_PUBLIC_GITHUB_CLIENT_ID}&redirect_uri=${process.env.NEXT_PUBLIC_GITHUB_OAUTH_CALLBACK}&scope=user`}
+        OAuthUri={`https://github.com/login/oauth/authorize?client_id=${process.env.NEXT_PUBLIC_GITHUB_CLIENT_ID}&redirect_uri=${process.env.NEXT_PUBLIC_GITHUB_OAUTH_CALLBACK}&scope=user repo`}
       ></RepoCard>{" "}
       <RepoCard
         Icon={FaBitbucket}

@@ -59,6 +59,7 @@ async function githubOauthCallback(code, userId) {
   await createRepo("github", {
     userId,
     username: user.login,
+    accessToken: token.access_token,
   });
 }
 
@@ -97,42 +98,51 @@ async function gitlabOauthCallback(code, userId) {
   return;
 }
 
-async function getGitRepos(userId, query) {
+async function getGitRepos({ userId, query, provider }) {
+  let res;
   const repo = await getRepoByUserId(userId);
-  if (repo.github?.installationId && repo.github?.username) {
-    return await githubService.getRepositories({ ...repo.github, query });
-  } else if (repo.bitbucket?.accessToken && repo.bitbucket?.username) {
-    const res = await bitbucketService.getRepositories({
-      accessToken: repo.bitbucket?.accessToken,
-      refreshToken: repo.bitbucket?.refreshToken,
-      query,
-    });
+  switch (provider) {
+    case "github":
+      const splitted = query.split("/");
+      const payload = { ...repo.github, query };
 
-    if (res.rotateTokens) {
-      await updateRepoById(repo._id, "bitbucket", {
-        accessToken: res.rotateTokens.accessToken,
-        refreshToken: res.rotateTokens.refreshToken,
+      if (splitted.length === 2) {
+        payload.username = splitted[0];
+        payload.query = splitted[1];
+      }
+
+      return await githubService.getRepositories(payload);
+    case "bitbucket":
+      res = await bitbucketService.getRepositories({
+        accessToken: repo.bitbucket?.accessToken,
+        refreshToken: repo.bitbucket?.refreshToken,
+        query,
       });
-    }
 
-    return res.repositories;
-  } else if (repo.gitlab?.accessToken && repo.gitlab?.username) {
-    const res = await gitlabService.getRepositories({
-      accessToken: repo.gitlab?.accessToken,
-      refreshToken: repo.gitlab?.refreshToken,
-      query,
-    });
+      if (res.rotateTokens) {
+        await updateRepoById(repo._id, "bitbucket", {
+          accessToken: res.rotateTokens.accessToken,
+          refreshToken: res.rotateTokens.refreshToken,
+        });
+      }
 
-    if (res.rotateTokens) {
-      await updateRepoById(repo._id, "gitlab", {
-        accessToken: res.rotateTokens.accessToken,
-        refreshToken: res.rotateTokens.refreshToken,
+      return res.repositories;
+
+    case "gitlab":
+      res = await gitlabService.getRepositories({
+        accessToken: repo.gitlab?.accessToken,
+        refreshToken: repo.gitlab?.refreshToken,
+        query,
       });
-    }
 
-    return res.repositories;
-  } else {
-    throw new AppError(ConnectRepoErrors.REPO_NOT_CONNECTED);
+      if (res.rotateTokens) {
+        await updateRepoById(repo._id, "gitlab", {
+          accessToken: res.rotateTokens.accessToken,
+          refreshToken: res.rotateTokens.refreshToken,
+        });
+      }
+
+      return res.repositories;
   }
 }
 
@@ -140,8 +150,7 @@ async function getConnectionStatus(userId) {
   const repo = await getRepoByUserId(userId);
 
   if (
-    !repo.github?.installationId &&
-    !repo.github?.username &&
+    !repo.github?.accessToken &&
     !repo.bitbucket?.accessToken &&
     !repo.gitlab?.accessToken
   ) {
@@ -156,7 +165,7 @@ async function getRepoBranches({ provider, userId, repository }) {
   switch (provider.toLowerCase()) {
     case "github":
       branches = await githubService.getRepositoryBranches({
-        installationId: repo.github?.installationId,
+        accessToken: repo.github?.accessToken,
         repository,
       });
       return branches.map((branch) => branch.name);
@@ -191,7 +200,7 @@ async function getRepoContents({
   switch (provider.toLowerCase()) {
     case "github":
       contents = await githubService.getRepositoryContents({
-        installationId: repo.github?.installationId,
+        accessToken: repo.github?.accessToken,
         repository,
         path,
         branch,

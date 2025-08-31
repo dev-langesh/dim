@@ -5,7 +5,7 @@ const initialState = {
     currentStep: 1,
     app_id: null,
     app_name: null,
-    github_repo: null,
+    git_repo: null,
     git_branch: null,
     source_dir: "",
     platform: null
@@ -41,6 +41,6 @@ export const { nextStep, prevStep, resetStep, setStep, setState, resetState } =
   projectSlice.actions;
 
 export const getCurrentStep = (state) => state.project.value.currentStep;
-export const getGithubRepo = (state) => state.project.value.github_repo;
+export const getGithubRepo = (state) => state.project.value.git_repo;
 
 export default projectSlice.reducer;

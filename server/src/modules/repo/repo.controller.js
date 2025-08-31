@@ -71,11 +71,6 @@ async function switchGitProvider(req, res) {
   return res.json(sRes);
 }
 
-async function revokeOAuthAppToken(req, res) {
-  const sRes = await repoService.revokeOAuthAppToken(req.user._id);
-  return res.json(sRes);
-}
-
 const repoController = {
   githubOauthCallback: asyncHandler(githubOauthCallback),
   githubInstallAppCallback: asyncHandler(githubInstallAppCallback),
@@ -87,7 +82,6 @@ const repoController = {
   getRepoBranches: asyncHandler(getRepoBranches),
   getRepoContents: asyncHandler(getRepoContents),
   switchGitProvider: asyncHandler(switchGitProvider),
-  revokeOAuthAppToken: asyncHandler(revokeOAuthAppToken),
 };
 
 module.exports = { repoController };

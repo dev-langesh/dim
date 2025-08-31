@@ -245,12 +245,6 @@ async function switchGitProvider({ userId, newProvider }) {
   return repo;
 }
 
-async function revokeOAuthAppToken(userId) {
-  const repo = await getRepoByUserId(userId);
-  if (repo.github?.accessToken)
-    await githubService.revokeOAuthAppToken(repo.github.accessToken);
-}
-
 const repoService = {
   githubOauthCallback,
   bitbucketOauthCallback,
@@ -262,7 +256,6 @@ const repoService = {
   getRepoBranches,
   getRepoContents,
   switchGitProvider,
-  revokeOAuthAppToken,
 };
 
 module.exports = { repoService };

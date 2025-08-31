@@ -15,5 +15,4 @@ export const repoApi = {
   getRepoContents: (q) => protectedApi.get(`/repos/git/contents/?${q}`),
   switchGitProvider: (payload) =>
     protectedApi.put(`/repos/switch-provider`, payload),
-  revokeOAuthAppToken: () => protectedApi.delete(`/repos/revoke-token`),
 };

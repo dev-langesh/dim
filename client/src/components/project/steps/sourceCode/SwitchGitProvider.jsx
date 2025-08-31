@@ -31,25 +31,24 @@ export default function SwitchGitProvider({
   }
 
   async function switchProvider(newProvider) {
-    try {
-      setLoading(true);
-      if (provider === newProvider) {
-        await repoApi.revokeOAuthAppToken();
-        beginOAuthFlow(newProvider);
-      }
-      if (!connectedRepo[newProvider]) {
+    if (provider === newProvider) {
+      beginOAuthFlow(newProvider);
+    }
+    if (!connectedRepo[newProvider]) {
+      try {
+        setLoading(true);
         await repoApi.switchGitProvider({
           newProvider,
         });
 
         setProvider(newProvider);
-      } else {
+      } catch (error) {
         beginOAuthFlow(newProvider);
+      } finally {
+        setLoading(false);
       }
-    } catch (error) {
+    } else {
       beginOAuthFlow(newProvider);
-    } finally {
-      setLoading(false);
     }
   }
 

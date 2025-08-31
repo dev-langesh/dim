@@ -42,6 +42,5 @@ router.get(
 );
 
 router.put("/switch-provider", validateToken, repoController.switchGitProvider);
-router.delete("/revoke-token", validateToken, repoController.revokeOAuthAppToken);
 
 module.exports = { repoRouter: router };

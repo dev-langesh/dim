@@ -6,6 +6,10 @@ const repoSchema = new mongoose.Schema({
     ref: "User",
     required: true,
   },
+  currentProvider: {
+    type: String,
+    enum: ["github", "bitbucket", "gitlab"],
+  },
   github: {
     accessToken: {
       type: String,

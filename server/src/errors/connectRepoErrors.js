@@ -54,6 +54,11 @@ const ConnectRepoErrors = {
     message: "Failed to get repository branches.",
     statusCode: 401,
   },
+  FAILED_TO_REVOKE_TOKEN: {
+    errorCode: 4012,
+    message: "Failed to revoke token",
+    statusCode: 400,
+  },
 };
 
 module.exports = { ConnectRepoErrors };

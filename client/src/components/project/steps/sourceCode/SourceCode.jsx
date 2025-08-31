@@ -25,15 +25,7 @@ export default function SourceCode() {
     try {
       setLoading(true);
       const res = await repoApi.getRepoConnectionStatus();
-      setProvider(
-        res.data.repo?.github
-          ? "github"
-          : res.data.repo?.gitlab
-          ? "gitlab"
-          : res.data.repo?.bitbucket
-          ? "bitbucket"
-          : ""
-      );
+      setProvider(res.data.repo.currentProvider);
       setConnectedRepo(res.data.repo);
       setLoading(false);
     } catch (error) {
@@ -60,9 +52,10 @@ export default function SourceCode() {
       <FormProvider {...methods}>
         <SelectRepository
           setConnectedRepo={setConnectedRepo}
+          setProvider={setProvider}
+          connectedRepo={connectedRepo}
           provider={provider}
         />
-        {/* <div className="h-[350px] w-[1px] bg-zinc-400"></div> */}
         <Separator
           orientation="vertical"
           className="self-stretch h-auto max-md:hidden"

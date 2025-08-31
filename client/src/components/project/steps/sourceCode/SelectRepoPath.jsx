@@ -12,7 +12,7 @@ import Input from "@/components/ui/Input";
 import Button from "@/components/ui/Button";
 import TreeNode from "@/components/project/steps/sourceCode/TreeNode";
 
-export default function SelectRepoPath({ provider }) {
+export default function SelectRepoPath() {
   const { control, watch } = useFormContext();
   const selectedRepo = useSelector(getGithubRepo);
   const branch = watch("git_branch");
@@ -24,7 +24,7 @@ export default function SelectRepoPath({ provider }) {
   async function fetchChildren(path = "") {
     try {
       const res = await repoApi.getRepoContents(
-        `provider=${provider}&repository=${selectedRepo}&branch=${branch}&returnFormat=folders&path=${path}`
+        `repository=${selectedRepo}&branch=${branch}&returnFormat=folders&path=${path}`
       );
       return res.data || [];
     } catch (err) {
@@ -46,10 +46,10 @@ export default function SelectRepoPath({ provider }) {
   }
 
   useEffect(() => {
-    if (selectedRepo && branch && provider) {
+    if (selectedRepo && branch) {
       loadRoot();
     }
-  }, [branch, provider]);
+  }, [branch]);
 
   function toggleTree() {
     setOpenTree((prev) => !prev);
@@ -64,9 +64,9 @@ export default function SelectRepoPath({ provider }) {
         render={({ field }) => (
           <div className="space-y-2">
             <div className="flex items-center gap-3">
-              <Input value={field.value} placeholder="./" readOnly />
+              <Input value={field.value || ""} placeholder="./" readOnly />
               <Button
-                disabled={!selectedRepo || !branch || !provider}
+                disabled={!selectedRepo || !branch}
                 type="button"
                 onClick={toggleTree}
               >

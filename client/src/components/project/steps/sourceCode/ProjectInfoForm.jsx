@@ -65,7 +65,7 @@ export default function ProjectInfoForm({ provider, methods }) {
     setValue("source_dir", "");
     if (!selectedRepo?.trim()) return;
     getRepoBranches();
-  }, [selectedRepo, provider]);
+  }, [selectedRepo]);
 
   useEffect(() => {
     for (const branch of branches) {
@@ -80,7 +80,7 @@ export default function ProjectInfoForm({ provider, methods }) {
     try {
       setLoading(true);
       const res = await repoApi.getRepoBranches(
-        `repository=${selectedRepo}&provider=${provider}`
+        `repository=${selectedRepo}`
       );
 
       if (!res.data?.length) {

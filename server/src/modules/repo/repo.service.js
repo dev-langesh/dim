@@ -7,36 +7,31 @@ const {
 } = require("../../lib/repository/bitbucket/bitbucket.service");
 const { gitlabService } = require("../../lib/repository/gitlab/gitlab.service");
 
-async function createRepo(remoteRepo, data) {
+async function createRepo(provider, data) {
   let repo = await Repo.findOne({ user: data.userId });
   if (!repo) {
     repo = await Repo.create({
       user: data.userId,
-      [remoteRepo]: data,
+      currentProvider: provider,
+      [provider]: data,
     });
   } else {
-    const hosts = ["github", "bitbucket", "gitlab"];
-    repo[remoteRepo] = {
-      ...repo[remoteRepo],
+    repo[provider] = {
+      ...repo[provider],
       ...data,
     };
-
-    hosts.forEach((host) => {
-      if (host !== remoteRepo) {
-        repo[host] = null;
-      }
-    });
+    repo.currentProvider = provider;
     await repo.save();
   }
   return repo;
 }
 
-async function updateRepoById(repoId, host, data) {
+async function updateRepoById(repoId, provider, data) {
   const repo = await Repo.findById(repoId);
   if (!repo) throw new AppError(ConnectRepoErrors.REPO_NOT_FOUND);
 
-  repo[host] = {
-    ...repo[host],
+  repo[provider] = {
+    ...repo[provider],
     ...data,
   };
   await repo.save();
@@ -98,10 +93,10 @@ async function gitlabOauthCallback(code, userId) {
   return;
 }
 
-async function getGitRepos({ userId, query, provider }) {
+async function getGitRepos({ userId, query }) {
   let res;
   const repo = await getRepoByUserId(userId);
-  switch (provider) {
+  switch (repo.currentProvider) {
     case "github":
       const splitted = query.split("/");
       const payload = { ...repo.github, query };
@@ -149,11 +144,7 @@ async function getGitRepos({ userId, query, provider }) {
 async function getConnectionStatus(userId) {
   const repo = await getRepoByUserId(userId);
 
-  if (
-    !repo.github?.accessToken &&
-    !repo.bitbucket?.accessToken &&
-    !repo.gitlab?.accessToken
-  ) {
+  if (!repo.currentProvider) {
     throw new AppError(ConnectRepoErrors.REPO_NOT_CONNECTED);
   }
   return { connected: true, repo };
@@ -162,7 +153,7 @@ async function getConnectionStatus(userId) {
 async function getRepoBranches({ provider, userId, repository }) {
   const repo = await getRepoByUserId(userId);
   let branches = [];
-  switch (provider.toLowerCase()) {
+  switch (repo.currentProvider) {
     case "github":
       branches = await githubService.getRepositoryBranches({
         accessToken: repo.github?.accessToken,
@@ -188,7 +179,6 @@ async function getRepoBranches({ provider, userId, repository }) {
 
 async function getRepoContents({
   userId,
-  provider,
   repository,
   path = "",
   returnFormat = "all",
@@ -197,7 +187,7 @@ async function getRepoContents({
   const repo = await getRepoByUserId(userId);
 
   let contents;
-  switch (provider.toLowerCase()) {
+  switch (repo.currentProvider) {
     case "github":
       contents = await githubService.getRepositoryContents({
         accessToken: repo.github?.accessToken,
@@ -242,6 +232,25 @@ async function getRepoContents({
   });
 }
 
+async function switchGitProvider({ userId, newProvider }) {
+  const repo = await getRepoByUserId(userId);
+
+  if (!repo[newProvider]) {
+    throw new AppError(ConnectRepoErrors.REPO_NOT_CONNECTED);
+  }
+
+  repo.currentProvider = newProvider;
+  await repo.save();
+
+  return repo;
+}
+
+async function revokeOAuthAppToken(userId) {
+  const repo = await getRepoByUserId(userId);
+  if (repo.github?.accessToken)
+    await githubService.revokeOAuthAppToken(repo.github.accessToken);
+}
+
 const repoService = {
   githubOauthCallback,
   bitbucketOauthCallback,
@@ -252,6 +261,8 @@ const repoService = {
   gitlabOauthCallback,
   getRepoBranches,
   getRepoContents,
+  switchGitProvider,
+  revokeOAuthAppToken,
 };
 
 module.exports = { repoService };

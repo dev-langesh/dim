@@ -32,18 +32,7 @@ async function getGitRepos(req, res) {
   const sRes = await repoService.getGitRepos({
     userId: req.user._id,
     query: req.query.q,
-    provider: req.query.provider,
   });
-  return res.json(sRes);
-}
-
-async function getRepo(req, res) {
-  const sRes = await repoService.getRepoByUserId(req.user._id);
-  return res.json(sRes);
-}
-
-async function getConnectionStatus(req, res) {
-  const sRes = await repoService.getConnectionStatus(req.user._id);
   return res.json(sRes);
 }
 
@@ -63,6 +52,30 @@ async function getRepoContents(req, res) {
   return res.json(sRes);
 }
 
+async function getRepo(req, res) {
+  const sRes = await repoService.getRepoByUserId(req.user._id);
+  return res.json(sRes);
+}
+
+async function getConnectionStatus(req, res) {
+  const sRes = await repoService.getConnectionStatus(req.user._id);
+  return res.json(sRes);
+}
+
+async function switchGitProvider(req, res) {
+  const { newProvider } = req.body;
+  const sRes = await repoService.switchGitProvider({
+    userId: req.user._id,
+    newProvider,
+  });
+  return res.json(sRes);
+}
+
+async function revokeOAuthAppToken(req, res) {
+  const sRes = await repoService.revokeOAuthAppToken(req.user._id);
+  return res.json(sRes);
+}
+
 const repoController = {
   githubOauthCallback: asyncHandler(githubOauthCallback),
   githubInstallAppCallback: asyncHandler(githubInstallAppCallback),
@@ -73,6 +86,8 @@ const repoController = {
   getConnectionStatus: asyncHandler(getConnectionStatus),
   getRepoBranches: asyncHandler(getRepoBranches),
   getRepoContents: asyncHandler(getRepoContents),
+  switchGitProvider: asyncHandler(switchGitProvider),
+  revokeOAuthAppToken: asyncHandler(revokeOAuthAppToken),
 };
 
 module.exports = { repoController };

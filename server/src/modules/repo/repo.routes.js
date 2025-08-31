@@ -5,12 +5,6 @@ const { repoInputSchema } = require("./repo.inputSchema");
 
 const router = require("express").Router();
 
-router.get("/", validateToken, repoController.getRepo);
-router.get(
-  "/connection-status",
-  validateToken,
-  repoController.getConnectionStatus
-);
 router.get("/git", validateToken, repoController.getGitRepos);
 router.get("/git/branches", validateToken, repoController.getRepoBranches);
 router.get("/git/contents", validateToken, repoController.getRepoContents);
@@ -39,5 +33,15 @@ router.get(
   validateToken,
   repoController.gitlabOauthCallback
 );
+
+router.get("/", validateToken, repoController.getRepo);
+router.get(
+  "/connection-status",
+  validateToken,
+  repoController.getConnectionStatus
+);
+
+router.put("/switch-provider", validateToken, repoController.switchGitProvider);
+router.delete("/revoke-token", validateToken, repoController.revokeOAuthAppToken);
 
 module.exports = { repoRouter: router };

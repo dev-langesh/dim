@@ -13,4 +13,7 @@ export const repoApi = {
   getRepoConnectionStatus: () => protectedApi.get(`/repos/connection-status`),
   getRepoBranches: (q) => protectedApi.get(`/repos/git/branches/?${q}`),
   getRepoContents: (q) => protectedApi.get(`/repos/git/contents/?${q}`),
+  switchGitProvider: (payload) =>
+    protectedApi.put(`/repos/switch-provider`, payload),
+  revokeOAuthAppToken: () => protectedApi.delete(`/repos/revoke-token`),
 };

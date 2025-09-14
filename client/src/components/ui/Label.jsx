@@ -3,8 +3,10 @@
 import * as React from "react";
 
 import { cn } from "@/utils/cn";
+import Tooltip from "./Tooltip";
+import { FaCircleInfo } from "react-icons/fa6";
 
-function LabelComponent({ className, children, ...props }) {
+function LabelComponent({ className, children, info, ...props }) {
   return (
     <label
       className={cn(
@@ -14,6 +16,11 @@ function LabelComponent({ className, children, ...props }) {
       {...props}
     >
       {children}
+      {info && (
+        <Tooltip text={info}>
+          <FaCircleInfo className="text-on-muted" />
+        </Tooltip>
+      )}
     </label>
   );
 }

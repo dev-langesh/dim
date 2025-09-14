@@ -57,7 +57,7 @@ export default function SelectRepoPath() {
 
   return (
     <div className="w-full">
-      <Label className="pb-2">Source Directory</Label>
+      <Label className="pb-2" info="The path to the source directory in the repository">Source Directory</Label>
       <Controller
         name="source_dir"
         control={control}

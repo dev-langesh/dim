@@ -4,9 +4,4 @@ export const supportedPlatforms = [
   { label: "Flask", value: "flask" },
   { label: "Fast API", value: "fastapi" },
   { label: "Docker", value: "docker" },
-  { label: "Other", value: "other" },
-  {
-    label: "Custom",
-    value: "custom",
-  },
 ];

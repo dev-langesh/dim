@@ -48,7 +48,7 @@ export default function SourceCode() {
   }
 
   return (
-    <Card className="flex items-start justify-center w-full md:w-[700px] lg:w-[800px] gap-4 shadow-md max-md:flex-col flex-shrink-0">
+    <Card className="flex items-start justify-center w-full lg:w-[900px] gap-4 shadow-md max-md:flex-col flex-shrink-0">
       <FormProvider {...methods}>
         <SelectRepository
           setConnectedRepo={setConnectedRepo}

@@ -10,7 +10,7 @@ function Tooltip({
   side = "bottom",
   align = "center",
   className,
-  delay = 100
+  delay = 100,
 }) {
   return (
     <TooltipPrimitive.Provider delayDuration={delay}>
@@ -21,7 +21,7 @@ function Tooltip({
             side={side}
             align={align}
             className={cn(
-              "rounded bg-black px-2 py-1 text-xs text-white shadow-md",
+              "rounded bg-black px-2 py-1 text-xs text-white shadow-md max-w-[200px] ",
               className
             )}
           >

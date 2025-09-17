@@ -4,8 +4,12 @@ import * as React from "react";
 import { cva } from "class-variance-authority";
 import { cn } from "@/utils/cn";
 
-const stepperVariants = cva("flex items-start justify-start w-full gap-2", {
+const stepperVariants = cva("flex w-full gap-2", {
   variants: {
+    orientation: {
+      horizontal: "flex-row items-start justify-start",
+      vertical: "flex-col items-start justify-start",
+    },
     size: {
       xs: "",
       sm: "",
@@ -14,12 +18,13 @@ const stepperVariants = cva("flex items-start justify-start w-full gap-2", {
     },
   },
   defaultVariants: {
+    orientation: "horizontal",
     size: "md",
   },
 });
 
 const stepIndicatorVariants = cva(
-  "rounded-[3px] flex items-center justify-center font-[700] transition-colors",
+  "rounded-[3px] flex items-center justify-center font-[700] transition-colors shrink-0",
   {
     variants: {
       active: {
@@ -41,58 +46,68 @@ const stepIndicatorVariants = cva(
 );
 
 const iconSizeVariants = {
-  xs: "text-md",
-  sm: "text-md",
+  xs: "text-sm",
+  sm: "text-sm",
   md: "text-md",
   lg: "text-lg",
 };
 
-const labelVariants = cva(
-  "font-[700] transition-colors text-center whitespace-nowrap",
-  {
-    variants: {
-      active: {
-        true: "text-black",
-        false: "text-on-muted",
-      },
-      size: {
-        xs: "text-xs",
-        sm: "text-xs",
-        md: "text-sm",
-        lg: "text-base",
-      },
+const labelVariants = cva("font-[700] transition-colors whitespace-nowrap", {
+  variants: {
+    active: {
+      true: "text-black",
+      false: "text-on-muted",
     },
-    defaultVariants: {
-      size: "md",
-      active: false,
+    size: {
+      xs: "text-xs",
+      sm: "text-xs",
+      md: "text-sm",
+      lg: "text-base",
     },
-  }
-);
+    orientation: {
+      horizontal: "text-center",
+      vertical: "text-left",
+    },
+  },
+  defaultVariants: {
+    size: "md",
+    active: false,
+    orientation: "horizontal",
+  },
+});
 
-const lineVariants = cva(
-  "transition-colors rounded-full w-full h-[1.3px] transform ",
-  {
-    variants: {
-      active: {
-        true: "bg-primary",
-        false: "bg-border",
-      },
-      size: {
-        xs: "translate-y-6",
-        sm: "translate-y-7",
-        md: "translate-y-8",
-        lg: "translate-y-9",
-      },
+const lineVariants = cva("flex-1 transition-colors rounded-full shrink-0", {
+  variants: {
+    active: {
+      true: "bg-primary",
+      false: "bg-border",
     },
-    defaultVariants: {
-      active: false,
+    size: {
+      xs: "",
+      sm: "",
+      md: "",
+      lg: "",
     },
-  }
-);
+    orientation: {
+      horizontal: "h-[1.3px] translate-y-6",
+      vertical: "w-[1.3px] translate-x-3",
+    },
+  },
+  defaultVariants: {
+    active: false,
+    orientation: "horizontal",
+  },
+});
 
-function StepperComponent({ currentStep, steps, size = "md", className }) {
+function StepperComponent({
+  currentStep,
+  steps,
+  size = "md",
+  orientation = "horizontal",
+  className,
+}) {
   return (
-    <div className={cn(stepperVariants({ size }), className)}>
+    <div className={cn(stepperVariants({ size, orientation }), className)}>
       {steps.map((step, index) => {
         const isActive = index + 1 <= currentStep;
         const isLast = index === steps.length - 1;
@@ -100,7 +115,14 @@ function StepperComponent({ currentStep, steps, size = "md", className }) {
 
         return (
           <React.Fragment key={index}>
-            <div className="flex flex-col items-center gap-2">
+            <div
+              className={cn(
+                "flex gap-2",
+                orientation === "horizontal"
+                  ? "flex-col items-center"
+                  : "flex-row items-center"
+              )}
+            >
               <div
                 className={stepIndicatorVariants({ active: isActive, size })}
               >
@@ -114,12 +136,27 @@ function StepperComponent({ currentStep, steps, size = "md", className }) {
                     })
                   : step.icon || index + 1}
               </div>
-              <div className={labelVariants({ active: isActive, size })}>
+              <div
+                className={labelVariants({
+                  active: isActive,
+                  size,
+                  orientation,
+                })}
+              >
                 {step.name}
               </div>
             </div>
             {!isLast && (
-              <div className={lineVariants({ active: highlightLine, size })} />
+              <div
+                className={cn(
+                  lineVariants({
+                    active: highlightLine,
+                    size,
+                    orientation,
+                  }),
+                  size === "lg" && orientation === "vertical" && "translate-x-4"
+                )}
+              />
             )}
           </React.Fragment>
         );

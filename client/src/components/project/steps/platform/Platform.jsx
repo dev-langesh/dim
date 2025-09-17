@@ -3,7 +3,6 @@ import { getPlatform } from "@/redux/slices/projectSlice";
 import React from "react";
 import { useSelector } from "react-redux";
 import Nodejs from "./Nodejs";
-import EnvForm from "./EnvForm";
 
 export default function Platform() {
   const currentPlatform = useSelector(getPlatform);
@@ -19,9 +18,8 @@ export default function Platform() {
   }
 
   return (
-    <Card className="w-full lg:w-[900px] gap-4 shadow-md max-md:flex-col flex-shrink-0">
+    <Card className="w-full lg:w-[900px] space-y-4 shadow-md">
       <PlatformComponent />
-      <EnvForm />
     </Card>
   );
 }

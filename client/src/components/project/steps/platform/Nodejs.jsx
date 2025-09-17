@@ -1,21 +1,22 @@
 "use client";
 
 import React, { useEffect, useImperativeHandle, useState } from "react";
-import { Controller, useForm, useFormContext } from "react-hook-form";
+import { useForm } from "react-hook-form";
 import Input from "@/components/ui/Input";
 import { useDispatch, useSelector } from "react-redux";
-import {
-  getGithubRepo,
-  getProjectState,
-  putState,
-  setState,
-} from "@/redux/slices/projectSlice";
+import { getProjectState, putState } from "@/redux/slices/projectSlice";
 import { useProjectForm } from "@/context/ProjectFormProvider";
 import { toast } from "react-toastify";
 import Switch from "@/components/ui/Switch";
 import { Label } from "@/components/ui/Label";
+import EnvForm from "./EnvForm";
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/Collapsible";
 
-export default function Nodejs({ provider, methods }) {
+export default function Nodejs() {
   const [scripts, setScripts] = useState({
     build: false,
     test: false,
@@ -126,6 +127,13 @@ export default function Nodejs({ provider, methods }) {
           error={errors.start_script}
           helperText={errors.start_script?.message}
         />
+
+        <Collapsible>
+          <CollapsibleTrigger>Environment Variables</CollapsibleTrigger>
+          <CollapsibleContent>
+            <EnvForm />
+          </CollapsibleContent>
+        </Collapsible>
       </form>
     </div>
   );

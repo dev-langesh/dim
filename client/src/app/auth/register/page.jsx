@@ -53,7 +53,7 @@ export default function Register() {
     try {
       await authApi.googleLogin({ idToken });
       toast.success("Registered with Google");
-      router.push("/");
+      window.location.href = "/";
     } catch (err) {
       toast.error(err.response?.data?.message || "Google registration failed");
     }

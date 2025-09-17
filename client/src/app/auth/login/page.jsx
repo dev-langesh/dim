@@ -54,7 +54,7 @@ export default function Login() {
     try {
       await authApi.googleLogin({ idToken });
       toast.success("Logged in with Google");
-      router.push("/");
+      window.location.href = "/";
     } catch (err) {
       toast.error(err.response?.data?.message || "Google login failed");
     }
@@ -64,7 +64,7 @@ export default function Login() {
     try {
       await authApi.login(data);
       toast.success("Login successful");
-      router.push("/");
+      window.location.href = "/";
     } catch (err) {
       toast.error(err.response?.data?.message || "Login failed");
       if (err.response?.data.errorCode === AuthErrorCodes.USER_NOT_VERIFIED) {

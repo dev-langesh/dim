@@ -73,7 +73,7 @@ export default function OtpVerification() {
       setLoading(true);
       const res = await authApi.verifyOtp({ to: email, otp });
       toast.success("OTP verified");
-      router.push("/");
+      window.location.href = "/";
     } catch (err) {
       toast.error(err.response?.data?.message || "Invalid OTP.");
     } finally {
